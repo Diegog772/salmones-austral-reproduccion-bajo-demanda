@@ -157,45 +157,49 @@
     .grid { grid-template-columns: 1fr; }
   }
 
-  .area-btn {
+  .area-card {
     position: relative;
-    padding: 28px 12px;
+    padding: 24px 12px;
     font-family: inherit;
-    font-weight: 700;
-    font-size: 1.15rem;
     color: #fff;
     background: linear-gradient(160deg, var(--bg-elevated), #1c1f22);
     border: 2px solid transparent;
     border-radius: 16px;
-    cursor: pointer;
     overflow: hidden;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, background 0.35s ease;
   }
 
-  .area-btn .icon {
+  .area-card .icon {
     display: block;
     font-size: 1.8rem;
     margin-bottom: 8px;
     transition: transform 0.25s ease;
   }
 
-  .area-btn:hover {
+  .area-card .area-name {
+    display: block;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
+  .area-card:hover {
     border-color: var(--accent-light);
     transform: translateY(-3px);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   }
 
-  .area-btn:hover .icon { transform: scale(1.15) rotate(-4deg); }
+  .area-card:hover .icon { transform: scale(1.15) rotate(-4deg); }
 
-  .area-btn:active { transform: scale(0.96); }
-
-  .area-btn:disabled { cursor: wait; opacity: 0.85; }
-
-  .area-btn.activated {
+  .area-card.activated {
     background: linear-gradient(160deg, var(--success), #1f7f5c);
     border-color: var(--success);
     animation: pulse-success 0.5s ease;
+  }
+
+  .area-card.stopped {
+    border-color: var(--danger);
   }
 
   @keyframes pulse-success {
@@ -204,16 +208,49 @@
     100% { transform: scale(1); }
   }
 
-  .area-btn .status {
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 10px 6px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  }
+
+  .action-btn:active { transform: scale(0.95); }
+  .action-btn:disabled { cursor: wait; opacity: 0.6; }
+
+  .action-btn.play {
+    border: none;
+    color: #fff;
+    background: var(--accent);
+  }
+  .action-btn.play:hover { background: var(--accent-light); }
+
+  .action-btn.stop {
+    border: 2px solid var(--danger);
+    background: transparent;
+    color: var(--danger);
+  }
+  .action-btn.stop:hover { background: var(--danger); color: #fff; }
+
+  .area-card .status {
     display: block;
-    margin-top: 6px;
+    margin-top: 10px;
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--text-dim);
     min-height: 16px;
   }
 
-  .area-btn.activated .status { color: #eafff4; }
+  .area-card.activated .status { color: #eafff4; }
 
   /* ---- Toast ---- */
   #toast {
@@ -259,26 +296,42 @@
   <h1>Activación de Campañas</h1>
   <p class="hint">👉 Presiona tu área para activar la campaña de ejercicios</p>
   <div class="grid">
-    <button class="area-btn" data-area="Filete" data-url="https://app.onsign.tv/play/ZGSqQcL6WqARD3r0OWREG20j">
+    <div class="area-card" data-area="Filete">
       <span class="icon">🐟</span>
-      Filete
+      <span class="area-name">Filete</span>
+      <div class="actions">
+        <button class="action-btn play" data-url="https://app.onsign.tv/play/ZGSqQcL6WqARD3r0OWREG20j">▶️ Activar</button>
+        <button class="action-btn stop" data-url="https://app.onsign.tv/stop/CfJDlpSRvUXiNWc9iUUxbBlB">⏹ Detener</button>
+      </div>
       <span class="status"></span>
-    </button>
-    <button class="area-btn" data-area="Empaque" data-url="https://app.onsign.tv/play/mcgGUvaTCyKFcUaChk2hoYKK">
+    </div>
+    <div class="area-card" data-area="Empaque">
       <span class="icon">📦</span>
-      Empaque
+      <span class="area-name">Empaque</span>
+      <div class="actions">
+        <button class="action-btn play" data-url="https://app.onsign.tv/play/mcgGUvaTCyKFcUaChk2hoYKK">▶️ Activar</button>
+        <button class="action-btn stop" data-url="https://app.onsign.tv/stop/TnuupVoDl8i5MTMdusrpx6wf">⏹ Detener</button>
+      </div>
       <span class="status"></span>
-    </button>
-    <button class="area-btn" data-area="Porcionado" data-url="https://app.onsign.tv/play/7ajIgNcTfWsgGIJn9peNJ4LO">
+    </div>
+    <div class="area-card" data-area="Porcionado">
       <span class="icon">🔪</span>
-      Porcionado
+      <span class="area-name">Porcionado</span>
+      <div class="actions">
+        <button class="action-btn play" data-url="https://app.onsign.tv/play/7ajIgNcTfWsgGIJn9peNJ4LO">▶️ Activar</button>
+        <button class="action-btn stop" data-url="https://app.onsign.tv/stop/FC73j0Hut9L8QDZCsTVVJ1hx">⏹ Detener</button>
+      </div>
       <span class="status"></span>
-    </button>
-    <button class="area-btn" data-area="Lavado" data-url="https://app.onsign.tv/play/Yxt5oahF4YqVcclQt45klJnK">
+    </div>
+    <div class="area-card" data-area="Lavado">
       <span class="icon">🚿</span>
-      Lavado
+      <span class="area-name">Lavado</span>
+      <div class="actions">
+        <button class="action-btn play" data-url="https://app.onsign.tv/play/Yxt5oahF4YqVcclQt45klJnK">▶️ Activar</button>
+        <button class="action-btn stop" data-url="https://app.onsign.tv/stop/L8xLbjsY6n6TYD62CNyc9x7L">⏹ Detener</button>
+      </div>
       <span class="status"></span>
-    </button>
+    </div>
   </div>
 </section>
 
@@ -371,30 +424,58 @@
     toast._hideTimer = setTimeout(() => toast.classList.remove("show"), 3200);
   }
 
-  document.querySelectorAll(".area-btn").forEach((btn) => {
-    const statusEl = btn.querySelector(".status");
-    const area = btn.dataset.area;
-    const url = btn.dataset.url;
+  document.querySelectorAll(".area-card").forEach((card) => {
+    const statusEl = card.querySelector(".status");
+    const area = card.dataset.area;
+    const playBtn = card.querySelector(".action-btn.play");
+    const stopBtn = card.querySelector(".action-btn.stop");
 
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
-      btn.classList.remove("activated");
+    function setBusy(busy) {
+      playBtn.disabled = busy;
+      stopBtn.disabled = busy;
+    }
+
+    playBtn.addEventListener("click", async () => {
+      setBusy(true);
       statusEl.textContent = "Enviando…";
       try {
-        await fetch(url, { mode: "no-cors" });
-        btn.classList.add("activated");
+        await fetch(playBtn.dataset.url, { mode: "no-cors" });
+        clearTimeout(card._resetTimer);
+        card.classList.remove("stopped");
+        card.classList.add("activated");
         statusEl.textContent = "✅ Activado";
         showToast(`✅ Campaña activada en ${area}`, false);
-        clearTimeout(btn._resetTimer);
-        btn._resetTimer = setTimeout(() => {
-          btn.classList.remove("activated");
+        card._resetTimer = setTimeout(() => {
+          card.classList.remove("activated");
           statusEl.textContent = "";
         }, 4000);
       } catch (err) {
         statusEl.textContent = "";
         showToast(`⚠️ No se pudo activar ${area}. Revisa tu conexión.`, true);
       } finally {
-        btn.disabled = false;
+        setBusy(false);
+      }
+    });
+
+    stopBtn.addEventListener("click", async () => {
+      setBusy(true);
+      statusEl.textContent = "Enviando…";
+      try {
+        await fetch(stopBtn.dataset.url, { mode: "no-cors" });
+        clearTimeout(card._resetTimer);
+        card.classList.remove("activated");
+        card.classList.add("stopped");
+        statusEl.textContent = "⏹ Detenido";
+        showToast(`⏹ Campaña detenida en ${area}`, false);
+        card._resetTimer = setTimeout(() => {
+          card.classList.remove("stopped");
+          statusEl.textContent = "";
+        }, 1500);
+      } catch (err) {
+        statusEl.textContent = "";
+        showToast(`⚠️ No se pudo detener ${area}. Revisa tu conexión.`, true);
+      } finally {
+        setBusy(false);
       }
     });
   });
