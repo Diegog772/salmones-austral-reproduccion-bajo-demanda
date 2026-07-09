@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Salmones Austral · Activación de Campañas</title>
+<style>
+  @font-face {
+    font-family: "Overpass";
+    src: url("assets/fonts/Overpass-Medium.ttf") format("truetype");
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Overpass";
+    src: url("assets/fonts/Overpass-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #1e2124;
+    --bg-elevated: #26292d;
+    --accent: #1f7a8c;
+    --accent-light: #3fb8cf;
+    --text: #f4f6f7;
+    --text-dim: #9aa3a8;
+    --danger: #d64545;
+    --success: #2ea87a;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Overpass", system-ui, sans-serif;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .logo {
+    width: min(280px, 70vw);
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-weight: 700;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    text-align: center;
+    margin: 0 0 32px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- Login screen ---- */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  #login-screen p.subtitle {
+    color: var(--text-dim);
+    text-align: center;
+    margin: 0 0 20px;
+    font-size: 0.95rem;
+  }
+
+  #password-input {
+    width: 100%;
+    padding: 16px 18px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    border-radius: 12px;
+    border: 2px solid var(--bg-elevated);
+    background: var(--bg-elevated);
+    color: var(--text);
+    outline: none;
+    text-align: center;
+    letter-spacing: 0.15em;
+  }
+
+  #password-input:focus {
+    border-color: var(--accent-light);
+  }
+
+  #login-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 16px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  #login-btn:active { transform: scale(0.98); }
+  #login-btn:hover { background: var(--accent-light); }
+  #login-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #login-error {
+    min-height: 22px;
+    margin-top: 12px;
+    color: var(--danger);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  /* ---- Buttons screen ---- */
+  #app-screen {
+    display: none;
+    width: 100%;
+    max-width: 420px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+
+  @media (max-width: 420px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .area-btn {
+    position: relative;
+    padding: 28px 12px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #fff;
+    background: var(--bg-elevated);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .area-btn:active { transform: scale(0.97); }
+  .area-btn:hover { border-color: var(--accent-light); }
+  .area-btn:disabled { cursor: wait; opacity: 0.75; }
+
+  .area-btn .status {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    min-height: 16px;
+  }
+
+  /* ---- Toast ---- */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    background: var(--success);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  #toast.error { background: var(--danger); }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<img class="logo" src="assets/logo.png" alt="Salmones Austral">
+
+<!-- Login -->
+<section id="login-screen">
+  <p class="subtitle">Ingresa la clave para activar campañas</p>
+  <input id="password-input" type="password" inputmode="text" autocomplete="off" placeholder="Clave de acceso">
+  <button id="login-btn" type="button">Ingresar</button>
+  <p id="login-error"></p>
+</section>
+
+<!-- Buttons -->
+<section id="app-screen">
+  <h1>Activación de Campañas</h1>
+  <div class="grid">
+    <button class="area-btn" data-area="Filete" data-url="https://app.onsign.tv/play/ZGSqQcL6WqARD3r0OWREG20j">
+      Filete
+      <span class="status"></span>
+    </button>
+    <button class="area-btn" data-area="Empaque" data-url="https://app.onsign.tv/play/mcgGUvaTCyKFcUaChk2hoYKK">
+      Empaque
+      <span class="status"></span>
+    </button>
+    <button class="area-btn" data-area="Porcionado" data-url="https://app.onsign.tv/play/7ajIgNcTfWsgGIJn9peNJ4LO">
+      Porcionado
+      <span class="status"></span>
+    </button>
+    <button class="area-btn" data-area="Lavado" data-url="https://app.onsign.tv/play/Yxt5oahF4YqVcclQt45klJnK">
+      Lavado
+      <span class="status"></span>
+    </button>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<script>
+  // Hash SHA-256 de la clave de acceso. Clave de ejemplo: "salmonesaustral2026".
+  // Para cambiarla: calcula el SHA-256 de la nueva clave y reemplaza este valor.
+  const PASSWORD_HASH = "91edf704a9712ba5b951c3450f6fc7f196942325d84f5cd7c6d44605f369d607";
+  const SESSION_KEY = "sa_onsign_unlocked";
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_SECONDS = 30;
+
+  const loginScreen = document.getElementById("login-screen");
+  const appScreen = document.getElementById("app-screen");
+  const passwordInput = document.getElementById("password-input");
+  const loginBtn = document.getElementById("login-btn");
+  const loginError = document.getElementById("login-error");
+  const toast = document.getElementById("toast");
+
+  let failedAttempts = 0;
+  let lockedUntil = 0;
+
+  async function sha256Hex(text) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function showApp() {
+    loginScreen.style.display = "none";
+    appScreen.style.display = "flex";
+  }
+
+  function startLockoutCountdown(seconds) {
+    passwordInput.disabled = true;
+    loginBtn.disabled = true;
+    const tick = () => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        passwordInput.disabled = false;
+        loginBtn.disabled = false;
+        loginError.textContent = "";
+        failedAttempts = 0;
+        return;
+      }
+      loginError.textContent = `Demasiados intentos. Espera ${remaining}s.`;
+      setTimeout(tick, 500);
+    };
+    tick();
+  }
+
+  async function attemptLogin() {
+    if (Date.now() < lockedUntil) return;
+
+    const value = passwordInput.value.trim();
+    if (!value) return;
+
+    const hash = await sha256Hex(value);
+    if (hash === PASSWORD_HASH) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      loginError.textContent = "";
+      showApp();
+    } else {
+      failedAttempts++;
+      passwordInput.value = "";
+      passwordInput.focus();
+      if (failedAttempts >= MAX_ATTEMPTS) {
+        lockedUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+        startLockoutCountdown(LOCKOUT_SECONDS);
+      } else {
+        loginError.textContent = `Clave incorrecta (${failedAttempts}/${MAX_ATTEMPTS})`;
+      }
+    }
+  }
+
+  loginBtn.addEventListener("click", attemptLogin);
+  passwordInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") attemptLogin();
+  });
+
+  if (sessionStorage.getItem(SESSION_KEY) === "1") {
+    showApp();
+  }
+
+  function showToast(message, isError) {
+    toast.textContent = message;
+    toast.classList.toggle("error", !!isError);
+    toast.classList.add("show");
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => toast.classList.remove("show"), 3200);
+  }
+
+  document.querySelectorAll(".area-btn").forEach((btn) => {
+    const statusEl = btn.querySelector(".status");
+    const area = btn.dataset.area;
+    const url = btn.dataset.url;
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      statusEl.textContent = "Enviando…";
+      try {
+        await fetch(url, { mode: "no-cors" });
+        statusEl.textContent = "";
+        showToast(`✅ Campaña activada en ${area}`, false);
+      } catch (err) {
+        statusEl.textContent = "";
+        showToast(`⚠️ No se pudo activar ${area}. Revisa tu conexión.`, true);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
