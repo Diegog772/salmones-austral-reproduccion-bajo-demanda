@@ -61,9 +61,16 @@
     font-weight: 700;
     font-size: clamp(1.1rem, 4vw, 1.5rem);
     text-align: center;
-    margin: 0 0 32px;
+    margin: 0 0 8px;
     color: var(--text);
     letter-spacing: 0.02em;
+  }
+
+  .hint {
+    color: var(--text-dim);
+    text-align: center;
+    font-size: 0.9rem;
+    margin: 0 0 28px;
   }
 
   /* ---- Login screen ---- */
@@ -157,17 +164,45 @@
     font-weight: 700;
     font-size: 1.15rem;
     color: #fff;
-    background: var(--bg-elevated);
+    background: linear-gradient(160deg, var(--bg-elevated), #1c1f22);
     border: 2px solid transparent;
     border-radius: 16px;
     cursor: pointer;
     overflow: hidden;
-    transition: border-color 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, background 0.35s ease;
   }
 
-  .area-btn:active { transform: scale(0.97); }
-  .area-btn:hover { border-color: var(--accent-light); }
-  .area-btn:disabled { cursor: wait; opacity: 0.75; }
+  .area-btn .icon {
+    display: block;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    transition: transform 0.25s ease;
+  }
+
+  .area-btn:hover {
+    border-color: var(--accent-light);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .area-btn:hover .icon { transform: scale(1.15) rotate(-4deg); }
+
+  .area-btn:active { transform: scale(0.96); }
+
+  .area-btn:disabled { cursor: wait; opacity: 0.85; }
+
+  .area-btn.activated {
+    background: linear-gradient(160deg, var(--success), #1f7f5c);
+    border-color: var(--success);
+    animation: pulse-success 0.5s ease;
+  }
+
+  @keyframes pulse-success {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
 
   .area-btn .status {
     display: block;
@@ -177,6 +212,8 @@
     color: var(--text-dim);
     min-height: 16px;
   }
+
+  .area-btn.activated .status { color: #eafff4; }
 
   /* ---- Toast ---- */
   #toast {
@@ -220,20 +257,25 @@
 <!-- Buttons -->
 <section id="app-screen">
   <h1>Activación de Campañas</h1>
+  <p class="hint">👉 Presiona tu área para activar tu campaña</p>
   <div class="grid">
     <button class="area-btn" data-area="Filete" data-url="https://app.onsign.tv/play/ZGSqQcL6WqARD3r0OWREG20j">
+      <span class="icon">🐟</span>
       Filete
       <span class="status"></span>
     </button>
     <button class="area-btn" data-area="Empaque" data-url="https://app.onsign.tv/play/mcgGUvaTCyKFcUaChk2hoYKK">
+      <span class="icon">📦</span>
       Empaque
       <span class="status"></span>
     </button>
     <button class="area-btn" data-area="Porcionado" data-url="https://app.onsign.tv/play/7ajIgNcTfWsgGIJn9peNJ4LO">
+      <span class="icon">🔪</span>
       Porcionado
       <span class="status"></span>
     </button>
     <button class="area-btn" data-area="Lavado" data-url="https://app.onsign.tv/play/Yxt5oahF4YqVcclQt45klJnK">
+      <span class="icon">🚿</span>
       Lavado
       <span class="status"></span>
     </button>
@@ -336,11 +378,18 @@
 
     btn.addEventListener("click", async () => {
       btn.disabled = true;
+      btn.classList.remove("activated");
       statusEl.textContent = "Enviando…";
       try {
         await fetch(url, { mode: "no-cors" });
-        statusEl.textContent = "";
+        btn.classList.add("activated");
+        statusEl.textContent = "✅ Activado";
         showToast(`✅ Campaña activada en ${area}`, false);
+        clearTimeout(btn._resetTimer);
+        btn._resetTimer = setTimeout(() => {
+          btn.classList.remove("activated");
+          statusEl.textContent = "";
+        }, 4000);
       } catch (err) {
         statusEl.textContent = "";
         showToast(`⚠️ No se pudo activar ${area}. Revisa tu conexión.`, true);
