@@ -253,6 +253,25 @@
 
   .area-card.activated .status { color: #eafff4; }
 
+  #logout-btn {
+    margin-top: 32px;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    background: transparent;
+    border: 2px solid var(--bg-elevated);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  #logout-btn:hover {
+    color: var(--text);
+    border-color: var(--accent-light);
+  }
+
   /* ---- Toast ---- */
   #toast {
     position: fixed;
@@ -334,6 +353,7 @@
       <span class="status"></span>
     </div>
   </div>
+  <button id="logout-btn" type="button">Cerrar sesión</button>
 </section>
 
 <div id="toast"></div>
@@ -351,6 +371,7 @@
   const passwordInput = document.getElementById("password-input");
   const loginBtn = document.getElementById("login-btn");
   const loginError = document.getElementById("login-error");
+  const logoutBtn = document.getElementById("logout-btn");
   const toast = document.getElementById("toast");
 
   let failedAttempts = 0;
@@ -364,6 +385,13 @@
   function showApp() {
     loginScreen.style.display = "none";
     appScreen.style.display = "flex";
+  }
+
+  function showLogin() {
+    appScreen.style.display = "none";
+    loginScreen.style.display = "flex";
+    passwordInput.value = "";
+    passwordInput.focus();
   }
 
   function startLockoutCountdown(seconds) {
@@ -416,6 +444,11 @@
   if (sessionStorage.getItem(SESSION_KEY) === "1") {
     showApp();
   }
+
+  logoutBtn.addEventListener("click", () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    showLogin();
+  });
 
   function showToast(message, isError) {
     toast.textContent = message;
