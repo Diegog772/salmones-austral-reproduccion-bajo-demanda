@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Salmones Austral · Activación de Campañas</title>
+<title>Salmones Austral · Activación de Ejercicios</title>
 <style>
   @font-face {
     font-family: "Overpass";
@@ -264,6 +264,22 @@
   #activate-screen-btn:active { transform: scale(0.98); }
   #activate-screen-btn:disabled { opacity: 0.6; cursor: wait; }
 
+  #stop-screen-btn {
+    padding: 12px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--danger);
+    background: transparent;
+    border: 2px solid var(--danger);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  }
+  #stop-screen-btn:hover { background: var(--danger); color: #fff; }
+  #stop-screen-btn:active { transform: scale(0.98); }
+  #stop-screen-btn:disabled { opacity: 0.6; cursor: wait; }
+
   #results-status {
     min-height: 18px;
     margin-top: 12px;
@@ -439,12 +455,12 @@
 <!-- Buttons -->
 <section id="app-screen">
   <div class="tabs">
-    <button class="tab-btn active" type="button" data-tab="tab-activacion">Activación de Campañas</button>
+    <button class="tab-btn active" type="button" data-tab="tab-activacion">Activación de Ejercicios</button>
     <button class="tab-btn" type="button" data-tab="tab-resultados">Resultados por Área</button>
   </div>
 
   <div id="tab-activacion" class="tab-panel active">
-  <h1>Activación de Campañas</h1>
+  <h1>Activación de Ejercicios</h1>
   <p class="hint">👉 Presiona tu área para activar la campaña de ejercicios</p>
   <div class="grid">
     <div class="area-card" data-area="Filete">
@@ -503,6 +519,7 @@
       <div class="results-actions">
         <button id="save-results-btn" type="button">💾 Guardar resultados</button>
         <button id="activate-screen-btn" type="button">▶️ Activar pantalla</button>
+        <button id="stop-screen-btn" type="button">⏹ Detener pantalla</button>
       </div>
       <p id="results-status"></p>
     </div>
@@ -526,6 +543,7 @@
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysXlU-WSA-9IVtTGa_Eio-QBiGG7aolRkoapetFP1iIa5mXYMCnegYis_ZB5DJtWSS/exec";
   const APPS_SCRIPT_WRITE_KEY = "sa-resultados-2026";
   const FILETE_RESULTS_PLAY_URL = "https://app.onsign.tv/play/40OLe6ORAsM8YtY65WDD3ZU0";
+  const FILETE_RESULTS_STOP_URL = "https://app.onsign.tv/stop/CfJDlpSRvUXiNWc9iUUxbBlB";
 
   const loginScreen = document.getElementById("login-screen");
   const appScreen = document.getElementById("app-screen");
@@ -694,11 +712,13 @@
   const linea2Input = document.getElementById("linea2-input");
   const saveResultsBtn = document.getElementById("save-results-btn");
   const activateScreenBtn = document.getElementById("activate-screen-btn");
+  const stopScreenBtn = document.getElementById("stop-screen-btn");
   const resultsStatus = document.getElementById("results-status");
 
   function setResultsBusy(busy) {
     saveResultsBtn.disabled = busy;
     activateScreenBtn.disabled = busy;
+    stopScreenBtn.disabled = busy;
   }
 
   async function loadResultados() {
@@ -753,6 +773,21 @@
     } catch (err) {
       resultsStatus.textContent = "";
       showToast("⚠️ No se pudo activar la pantalla. Revisa tu conexión.", true);
+    } finally {
+      setResultsBusy(false);
+    }
+  });
+
+  stopScreenBtn.addEventListener("click", async () => {
+    setResultsBusy(true);
+    resultsStatus.textContent = "Deteniendo pantalla…";
+    try {
+      await fetch(FILETE_RESULTS_STOP_URL, { mode: "no-cors" });
+      resultsStatus.textContent = "";
+      showToast("⏹ Pantalla de resultados detenida", false);
+    } catch (err) {
+      resultsStatus.textContent = "";
+      showToast("⚠️ No se pudo detener la pantalla. Revisa tu conexión.", true);
     } finally {
       setResultsBusy(false);
     }
