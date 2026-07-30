@@ -146,6 +146,131 @@
     align-items: center;
   }
 
+  /* ---- Tabs ---- */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px 8px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    background: var(--bg-elevated);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .tab-btn.active {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent-light);
+  }
+
+  .tab-panel { display: none; width: 100%; flex-direction: column; align-items: center; }
+  .tab-panel.active { display: flex; }
+
+  /* ---- Resultados por área ---- */
+  .results-card {
+    width: 100%;
+    padding: 24px 20px;
+    text-align: center;
+    background: linear-gradient(160deg, var(--bg-elevated), #1c1f22);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  .results-card .icon { display: block; font-size: 1.8rem; margin-bottom: 8px; }
+  .results-card .area-name { display: block; font-weight: 700; font-size: 1.1rem; margin-bottom: 20px; }
+
+  .field-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .field {
+    flex: 1;
+    text-align: left;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .field input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    font-weight: 700;
+    text-align: center;
+    border-radius: 10px;
+    border: 2px solid #33383d;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  .field input[type="number"]:focus { border-color: var(--accent-light); }
+
+  .results-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  #save-results-btn {
+    padding: 14px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  }
+  #save-results-btn:hover { background: var(--accent-light); }
+  #save-results-btn:active { transform: scale(0.98); }
+  #save-results-btn:disabled { opacity: 0.6; cursor: wait; }
+
+  #activate-screen-btn {
+    padding: 12px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent-light);
+    background: transparent;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  }
+  #activate-screen-btn:hover { background: var(--accent); color: #fff; }
+  #activate-screen-btn:active { transform: scale(0.98); }
+  #activate-screen-btn:disabled { opacity: 0.6; cursor: wait; }
+
+  #results-status {
+    min-height: 18px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -313,6 +438,12 @@
 
 <!-- Buttons -->
 <section id="app-screen">
+  <div class="tabs">
+    <button class="tab-btn active" type="button" data-tab="tab-activacion">Activación de Campañas</button>
+    <button class="tab-btn" type="button" data-tab="tab-resultados">Resultados por Área</button>
+  </div>
+
+  <div id="tab-activacion" class="tab-panel active">
   <h1>Activación de Campañas</h1>
   <p class="hint">👉 Presiona tu área para activar la campaña de ejercicios</p>
   <div class="grid">
@@ -353,6 +484,30 @@
       <span class="status"></span>
     </div>
   </div>
+  </div>
+
+  <div id="tab-resultados" class="tab-panel">
+    <div class="results-card">
+      <span class="icon">🐟</span>
+      <span class="area-name">Filete — Piezas por línea</span>
+      <div class="field-row">
+        <div class="field">
+          <label for="linea1-input">Línea 1</label>
+          <input id="linea1-input" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="linea2-input">Línea 2</label>
+          <input id="linea2-input" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </div>
+      </div>
+      <div class="results-actions">
+        <button id="save-results-btn" type="button">💾 Guardar resultados</button>
+        <button id="activate-screen-btn" type="button">▶️ Activar pantalla</button>
+      </div>
+      <p id="results-status"></p>
+    </div>
+  </div>
+
   <button id="logout-btn" type="button">Cerrar sesión</button>
 </section>
 
@@ -365,6 +520,12 @@
   const SESSION_KEY = "sa_onsign_unlocked";
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_SECONDS = 30;
+
+  // Backend de Resultados por Área (Google Apps Script). Reemplazar por la URL real
+  // una vez desplegado el Web App (ver appscript/Code.gs) — mismo WRITE_KEY en ambos lados.
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/REEMPLAZAR_CON_TU_DEPLOY_ID/exec";
+  const APPS_SCRIPT_WRITE_KEY = "sa-resultados-2026";
+  const FILETE_RESULTS_PLAY_URL = "https://app.onsign.tv/play/40OLe6ORAsM8YtY65WDD3ZU0";
 
   const loginScreen = document.getElementById("login-screen");
   const appScreen = document.getElementById("app-screen");
@@ -512,6 +673,89 @@
         setBusy(false);
       }
     });
+  });
+
+  // ---- Pestañas ----
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.toggle("active", b === btn));
+      tabPanels.forEach((p) => p.classList.toggle("active", p.id === btn.dataset.tab));
+      if (btn.dataset.tab === "tab-resultados") {
+        loadResultados();
+      }
+    });
+  });
+
+  // ---- Resultados por Área (Filete) ----
+  const linea1Input = document.getElementById("linea1-input");
+  const linea2Input = document.getElementById("linea2-input");
+  const saveResultsBtn = document.getElementById("save-results-btn");
+  const activateScreenBtn = document.getElementById("activate-screen-btn");
+  const resultsStatus = document.getElementById("results-status");
+
+  function setResultsBusy(busy) {
+    saveResultsBtn.disabled = busy;
+    activateScreenBtn.disabled = busy;
+  }
+
+  async function loadResultados() {
+    resultsStatus.textContent = "Cargando valores actuales…";
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=read`);
+      const data = await res.json();
+      if (typeof data.linea1 === "number") linea1Input.value = data.linea1;
+      if (typeof data.linea2 === "number") linea2Input.value = data.linea2;
+      resultsStatus.textContent = data.fecha ? `Último guardado: ${data.fecha}` : "";
+    } catch (err) {
+      resultsStatus.textContent = "";
+      showToast("⚠️ No se pudieron cargar los valores actuales.", true);
+    }
+  }
+
+  saveResultsBtn.addEventListener("click", async () => {
+    const linea1 = Number(linea1Input.value);
+    const linea2 = Number(linea2Input.value);
+    if (isNaN(linea1) || isNaN(linea2) || linea1 < 0 || linea2 < 0) {
+      showToast("⚠️ Ingresa valores numéricos válidos para ambas líneas.", true);
+      return;
+    }
+
+    setResultsBusy(true);
+    resultsStatus.textContent = "Guardando…";
+    try {
+      const url = `${APPS_SCRIPT_URL}?action=update&linea1=${linea1}&linea2=${linea2}&key=${encodeURIComponent(APPS_SCRIPT_WRITE_KEY)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      await fetch(FILETE_RESULTS_PLAY_URL, { mode: "no-cors" });
+
+      resultsStatus.textContent = `Último guardado: ${data.fecha}`;
+      showToast("✅ Resultados guardados y pantalla actualizada", false);
+    } catch (err) {
+      resultsStatus.textContent = "";
+      showToast("⚠️ No se pudieron guardar los resultados. Revisa tu conexión.", true);
+    } finally {
+      setResultsBusy(false);
+    }
+  });
+
+  activateScreenBtn.addEventListener("click", async () => {
+    setResultsBusy(true);
+    resultsStatus.textContent = "Activando pantalla…";
+    try {
+      await fetch(FILETE_RESULTS_PLAY_URL, { mode: "no-cors" });
+      resultsStatus.textContent = "";
+      showToast("✅ Pantalla de resultados activada", false);
+    } catch (err) {
+      resultsStatus.textContent = "";
+      showToast("⚠️ No se pudo activar la pantalla. Revisa tu conexión.", true);
+    } finally {
+      setResultsBusy(false);
+    }
   });
 </script>
 
