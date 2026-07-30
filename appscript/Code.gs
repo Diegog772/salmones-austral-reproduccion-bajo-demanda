@@ -12,8 +12,25 @@
 var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Cámbiala aquí y en index.html si quieres rotarla.
 var SHEET_NAME = "Filete";
 
+// Proyecto standalone (no atado a una Sheet): se crea una Spreadsheet propia la
+// primera vez que corre, y su ID queda cacheado en las Script Properties.
+function getSpreadsheet_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty("SPREADSHEET_ID");
+  if (id) {
+    try {
+      return SpreadsheetApp.openById(id);
+    } catch (err) {
+      // el ID guardado ya no es válido (ej. se borró la hoja) — se recrea abajo.
+    }
+  }
+  var ss = SpreadsheetApp.create("Salmones Austral - Resultados por Área");
+  props.setProperty("SPREADSHEET_ID", ss.getId());
+  return ss;
+}
+
 function getSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
