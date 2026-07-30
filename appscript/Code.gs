@@ -11,6 +11,7 @@
 
 var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Cámbiala aquí y en index.html si quieres rotarla.
 var SHEET_NAME = "Filete";
+var LOG_SHEET_NAME = "Log";
 
 // Proyecto standalone (no atado a una Sheet): se crea una Spreadsheet propia la
 // primera vez que corre, y su ID queda cacheado en las Script Properties.
@@ -42,6 +43,16 @@ function getSheet_() {
   return sheet;
 }
 
+function getLogSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(LOG_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(LOG_SHEET_NAME);
+    sheet.appendRow(["Fecha y hora", "Linea1", "Linea2", "Fecha turno"]);
+  }
+  return sheet;
+}
+
 function readData_() {
   var sheet = getSheet_();
   var linea1 = sheet.getRange(2, 2).getValue();
@@ -61,6 +72,10 @@ function writeData_(linea1, linea2) {
   sheet.getRange(2, 2).setValue(linea1);
   sheet.getRange(3, 2).setValue(linea2);
   sheet.getRange(4, 2).setValue(fecha);
+
+  var timestamp = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+  getLogSheet_().appendRow([timestamp, linea1, linea2, fecha]);
+
   return { linea1: linea1, linea2: linea2, fecha: fecha };
 }
 
@@ -72,6 +87,10 @@ function jsonOutput_(obj) {
 function doGet(e) {
   var params = (e && e.parameter) || {};
   var action = params.action || "read";
+
+  if (action === "meta") {
+    return jsonOutput_({ spreadsheetUrl: getSpreadsheet_().getUrl() });
+  }
 
   if (action === "update") {
     if (params.key !== WRITE_KEY) {
