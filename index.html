@@ -542,8 +542,12 @@
   // una vez desplegado el Web App (ver appscript/Code.gs) — mismo WRITE_KEY en ambos lados.
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysXlU-WSA-9IVtTGa_Eio-QBiGG7aolRkoapetFP1iIa5mXYMCnegYis_ZB5DJtWSS/exec";
   const APPS_SCRIPT_WRITE_KEY = "sa-resultados-2026";
-  const FILETE_RESULTS_PLAY_URL = "https://app.onsign.tv/play/40OLe6ORAsM8YtY65WDD3ZU0";
+  const FILETE_RESULTS_PLAY_URL = "https://app.onsign.tv/play/qweX0xIfnRaNrQTBn00sKjem";
   const FILETE_RESULTS_STOP_URL = "https://app.onsign.tv/stop/CfJDlpSRvUXiNWc9iUUxbBlB";
+  // Script de sync Sheet → Slides (proyecto separado). Se llama desde el
+  // navegador justo después de guardar, para que la Slide se actualice ya.
+  const SLIDES_SYNC_URL = "https://script.google.com/macros/s/AKfycby4bWODE4XzffUxZ9x7VKJdgfgkFPVhxxgoVNV_b9QkzWEikKMTw4jsPhd85X5qjCw/exec";
+  const SLIDES_SYNC_TOKEN = "salmones-austral-2026";
 
   const loginScreen = document.getElementById("login-screen");
   const appScreen = document.getElementById("app-screen");
@@ -750,6 +754,9 @@
       const res = await fetch(url);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      const syncUrl = `${SLIDES_SYNC_URL}?token=${encodeURIComponent(SLIDES_SYNC_TOKEN)}`;
+      await fetch(syncUrl, { mode: "no-cors" });
 
       await fetch(FILETE_RESULTS_PLAY_URL, { mode: "no-cors" });
 

@@ -1,21 +1,37 @@
 /**
  * Salmones Austral — Backend de "Resultados por Área" (Filete).
  *
+ * Arquitectura: esta página escribe Línea1/Línea2 directamente en el Google
+ * Sheet COMPARTIDO que lee el script de sincronización a Slides (proyecto de
+ * Pablo). Ese sync a Slides lo dispara el navegador (index.html) justo
+ * después de que este endpoint confirme el guardado — no se hace desde aquí
+ * con UrlFetchApp porque esta cuenta de Workspace no tiene autorizado el
+ * scope script.external_request (bloqueo, aparentemente, a nivel de admin).
+ * OnSign ya no consulta ningún JSON nuestro — reproduce la Slide directamente.
+ *
  * Publicar como Web App (Implementar > Nueva implementación > Aplicación web):
  *   - Ejecutar como: Yo
  *   - Quién tiene acceso: Cualquier usuario
- * La URL /exec que entrega el deploy es la que se configura en:
- *   - OnSign TV (fuente de datos "JSON desde URL"), y
- *   - la constante APPS_SCRIPT_URL en index.html.
+ * La URL /exec que entrega el deploy es la que usa la constante
+ * APPS_SCRIPT_URL en index.html (no cambia entre redeploys si se usa
+ * `clasp deploy --deploymentId <mismo-id>`).
  */
 
 var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Cámbiala aquí y en index.html si quieres rotarla.
-var SHEET_NAME = "Filete";
+
+// Sheet compartido que lee el script de sync-a-Slides (no es propiedad nuestra).
+var SHARED_SHEET_ID = "1sF8TLMUcYGfOupQfTiE5n63TPqyuXoc7Z9ljiu3z2LA";
+var SHARED_SHEET_TAB = "Hoja 1";
+
 var LOG_SHEET_NAME = "Log";
 
-// Proyecto standalone (no atado a una Sheet): se crea una Spreadsheet propia la
-// primera vez que corre, y su ID queda cacheado en las Script Properties.
-function getSpreadsheet_() {
+function getSharedSheet_() {
+  return SpreadsheetApp.openById(SHARED_SHEET_ID).getSheetByName(SHARED_SHEET_TAB);
+}
+
+// Spreadsheet PROPIA (privada), solo para el log de auditoría — separada del
+// Sheet compartido de arriba. Se crea sola la primera vez que corre.
+function getAuditSpreadsheet_() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty("SPREADSHEET_ID");
   if (id) {
@@ -30,50 +46,53 @@ function getSpreadsheet_() {
   return ss;
 }
 
-function getSheet_() {
-  var ss = getSpreadsheet_();
-  var sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(["Linea", "Piezas"]);
-    sheet.appendRow(["L1", 0]);
-    sheet.appendRow(["L2", 0]);
-    sheet.appendRow(["Fecha", ""]);
-  }
-  return sheet;
-}
-
 function getLogSheet_() {
-  var ss = getSpreadsheet_();
+  var ss = getAuditSpreadsheet_();
   var sheet = ss.getSheetByName(LOG_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(LOG_SHEET_NAME);
     sheet.appendRow(["Fecha y hora", "Linea1", "Linea2", "Fecha turno"]);
   }
+  sheet.getRange("A:A").setNumberFormat("@");
+  sheet.getRange("D:D").setNumberFormat("@");
   return sheet;
 }
 
 function readData_() {
-  var sheet = getSheet_();
-  var linea1 = sheet.getRange(2, 2).getValue();
-  var linea2 = sheet.getRange(3, 2).getValue();
-  var fecha = sheet.getRange(4, 2).getValue();
+  var sheet = getSharedSheet_();
+  var linea1 = sheet.getRange("B2").getValue();
+  var linea2 = sheet.getRange("B3").getValue();
+  var fechaCell = sheet.getRange("B5").getValue();
+  var tz = Session.getScriptTimeZone() || "America/Santiago";
+  var fecha;
+  if (Object.prototype.toString.call(fechaCell) === "[object Date]") {
+    // Fórmula =HOY() (u otro valor tipo Fecha real): se formatea directo.
+    fecha = Utilities.formatDate(fechaCell, tz, "dd/MM/yyyy");
+  } else if (typeof fechaCell === "number") {
+    // Serial de fecha de Sheets (días desde 1899-12-30, epoch de Sheets/Excel)
+    // — pasa esto cuando la celda tiene formato Texto pero el valor interno
+    // sigue siendo una fecha real. Se reconstruye el Date antes de formatear.
+    var asDate = new Date(Math.round((fechaCell - 25569) * 86400 * 1000));
+    fecha = Utilities.formatDate(asDate, tz, "dd/MM/yyyy");
+  } else {
+    fecha = String(fechaCell || "");
+  }
   return {
     linea1: Number(linea1) || 0,
     linea2: Number(linea2) || 0,
-    fecha: String(fecha || "")
+    fecha: fecha
   };
 }
 
 function writeData_(linea1, linea2) {
-  var sheet = getSheet_();
-  var tz = Session.getScriptTimeZone() || "America/Santiago";
-  var fecha = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy");
-  sheet.getRange(2, 2).setValue(linea1);
-  sheet.getRange(3, 2).setValue(linea2);
-  sheet.getRange(4, 2).setValue(fecha);
+  var sheet = getSharedSheet_();
+  sheet.getRange("B2").setValue(linea1);
+  sheet.getRange("B3").setValue(linea2);
+  // B5 (Fecha) no se toca: queda como fórmula =HOY() en el Sheet compartido.
 
+  var tz = Session.getScriptTimeZone() || "America/Santiago";
   var timestamp = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+  var fecha = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy");
   getLogSheet_().appendRow([timestamp, linea1, linea2, fecha]);
 
   return { linea1: linea1, linea2: linea2, fecha: fecha };
@@ -89,7 +108,7 @@ function doGet(e) {
   var action = params.action || "read";
 
   if (action === "meta") {
-    return jsonOutput_({ spreadsheetUrl: getSpreadsheet_().getUrl() });
+    return jsonOutput_({ spreadsheetUrl: getAuditSpreadsheet_().getUrl() });
   }
 
   if (action === "update") {
