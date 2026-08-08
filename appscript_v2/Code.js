@@ -146,10 +146,7 @@ function writeData_(params) {
   var logSheet = ss.getSheetByName(LOG_TAB);
   if (!logSheet) {
     logSheet = ss.insertSheet(LOG_TAB);
-    logSheet.appendRow(["Día", "Hora", "Área"].concat(
-      FIELD_HEADERS.map(function (h) { return "L1 " + h; }),
-      FIELD_HEADERS.map(function (h) { return "L2 " + h; })
-    ));
+    logSheet.appendRow(logHeaderRow_());
   }
   logSheet.appendRow([dia, hora, AREA_NAME].concat(row1, row2));
 
@@ -161,9 +158,22 @@ function writeData_(params) {
   return result;
 }
 
+function logHeaderRow_() {
+  return ["Día", "Hora", "Área"].concat(
+    FIELD_HEADERS.map(function (h) { return "L1 " + h; }),
+    FIELD_HEADERS.map(function (h) { return "L2 " + h; })
+  );
+}
+
 function setupHeaders_() {
-  var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_TAB);
-  sheet.getRange("B1:G1").setValues([FIELD_HEADERS]);
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  ss.getSheetByName(SHEET_TAB).getRange("B1:G1").setValues([FIELD_HEADERS]);
+
+  var logSheet = ss.getSheetByName(LOG_TAB);
+  if (!logSheet) {
+    logSheet = ss.insertSheet(LOG_TAB);
+  }
+  logSheet.getRange(1, 1, 1, 15).setValues([logHeaderRow_()]);
 }
 
 function jsonOutput_(obj) {
