@@ -4,15 +4,17 @@
  * Un solo proyecto, un solo dueño (Diego): escribe Línea1/Línea2 en el Sheet
  * propio, sincroniza la Slide propia EN EL MISMO PROCESO (sin llamada HTTP a
  * otro script), y registra cada guardado en la pestaña "Log" del mismo Sheet.
- * Reemplaza el split anterior (PSP_Filete + script de sync de Pablo) una vez
- * que esto quede verificado — NO se conecta todavía a index.html.
+ *
+ * Optimización de velocidad: cada SpreadsheetApp.openById / SlidesApp.openById
+ * es un viaje de red aparte. Se abre el Sheet UNA sola vez por request y esa
+ * referencia se reutiliza en todo el flujo (antes se abría 3 veces).
  *
  * Publicar como Web App (Implementar > Nueva implementación > Aplicación web):
  *   - Ejecutar como: Yo
  *   - Quién tiene acceso: Cualquier usuario
  */
 
-var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Debe coincidir con index.html cuando se conecte.
+var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Debe coincidir con index.html.
 
 var SHEET_ID = "1hkzQJJnTtBi_3k9LhlieLu8msHnoorS3Ikf5RsI8vgo";
 var SHEET_TAB = "Hoja 1";
@@ -20,47 +22,35 @@ var LOG_TAB = "Log";
 var SLIDE_ID = "1SUnpb0vz5XmA5QDpOX2D5dU3UdPKa9CoE9KqP1ez8wo";
 var AREA_NAME = "Filete";
 
-function getSheet_() {
-  return SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_TAB);
-}
-
-function getLogSheet_() {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName(LOG_TAB);
-  if (!sheet) {
-    sheet = ss.insertSheet(LOG_TAB);
-    sheet.appendRow(["Día", "Hora", "Área", "Filete L1 (Piezas)", "Filete L2 (Piezas)"]);
-  }
-  return sheet;
-}
-
-function readData_() {
-  var sheet = getSheet_();
-  var linea1 = sheet.getRange("B2").getValue();
-  var linea2 = sheet.getRange("B3").getValue();
-  var fechaCell = sheet.getRange("B5").getValue();
-  var tz = Session.getScriptTimeZone() || "America/Santiago";
-  var fecha;
+function formatFecha_(fechaCell, tz) {
   if (Object.prototype.toString.call(fechaCell) === "[object Date]") {
-    fecha = Utilities.formatDate(fechaCell, tz, "dd/MM/yyyy");
-  } else if (typeof fechaCell === "number") {
+    return Utilities.formatDate(fechaCell, tz, "dd/MM/yyyy");
+  }
+  if (typeof fechaCell === "number") {
     // Serial de fecha de Sheets (días desde 1899-12-30) — pasa si la celda
     // quedó con formato Texto pero el valor interno sigue siendo una fecha.
     var asDate = new Date(Math.round((fechaCell - 25569) * 86400 * 1000));
-    fecha = Utilities.formatDate(asDate, tz, "dd/MM/yyyy");
-  } else {
-    fecha = String(fechaCell || "");
+    return Utilities.formatDate(asDate, tz, "dd/MM/yyyy");
   }
-  Logger.log("readData_: linea1=" + linea1 + " linea2=" + linea2 + " fecha=" + fecha);
-  return {
-    linea1: Number(linea1) || 0,
-    linea2: Number(linea2) || 0,
-    fecha: fecha
+  return String(fechaCell || "");
+}
+
+function readData_() {
+  var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_TAB);
+  var vals = sheet.getRange("B2:B5").getValues(); // 1 sola llamada en vez de 3
+  var tz = Session.getScriptTimeZone() || "America/Santiago";
+  var result = {
+    linea1: Number(vals[0][0]) || 0,
+    linea2: Number(vals[1][0]) || 0,
+    fecha: formatFecha_(vals[3][0], tz)
   };
+  Logger.log("readData_: " + JSON.stringify(result));
+  return result;
 }
 
 // ---- Sync Sheet -> Slide (fusionado del script de Pablo, mismo proceso) ----
-function syncSheetToSlide_() {
+// Recibe el `sheet` ya abierto para no reabrir el Spreadsheet de nuevo.
+function syncSheetToSlide_(sheet) {
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
@@ -69,7 +59,6 @@ function syncSheetToSlide_() {
     return;
   }
   try {
-    var sheet = getSheet_();
     var data = sheet.getDataRange().getValues();
     var slide = SlidesApp.openById(SLIDE_ID).getSlides()[0];
     var shapeByTag = {};
@@ -111,20 +100,27 @@ function formatValue_(rawValue, now) {
 
 function writeData_(linea1, linea2) {
   Logger.log("writeData_: guardando linea1=" + linea1 + " linea2=" + linea2);
-  var sheet = getSheet_();
-  sheet.getRange("B2").setValue(linea1);
-  sheet.getRange("B3").setValue(linea2);
+  var ss = SpreadsheetApp.openById(SHEET_ID); // 1 sola apertura, reutilizada abajo
+  var sheet = ss.getSheetByName(SHEET_TAB);
+
+  sheet.getRange("B2:B3").setValues([[linea1], [linea2]]); // 1 sola escritura en vez de 2
   // B5 (Fecha) no se toca: queda como fórmula =HOY() propia del Sheet.
 
   var tz = Session.getScriptTimeZone() || "America/Santiago";
   var dia = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy");
   var hora = Utilities.formatDate(new Date(), tz, "HH:mm:ss");
-  getLogSheet_().appendRow([dia, hora, AREA_NAME, linea1, linea2]);
-  Logger.log("writeData_: fila agregada al Log -> " + dia + " " + hora + " " + AREA_NAME + " " + linea1 + " " + linea2);
 
-  syncSheetToSlide_();
+  var logSheet = ss.getSheetByName(LOG_TAB);
+  if (!logSheet) {
+    logSheet = ss.insertSheet(LOG_TAB);
+    logSheet.appendRow(["Día", "Hora", "Área", "Filete L1 (Piezas)", "Filete L2 (Piezas)"]);
+  }
+  logSheet.appendRow([dia, hora, AREA_NAME, linea1, linea2]);
 
-  var result = { linea1: linea1, linea2: linea2, fecha: readData_().fecha };
+  syncSheetToSlide_(sheet);
+
+  var fecha = formatFecha_(sheet.getRange("B5").getValue(), tz);
+  var result = { linea1: linea1, linea2: linea2, fecha: fecha };
   Logger.log("writeData_: resultado final -> " + JSON.stringify(result));
   return result;
 }
