@@ -1,0 +1,5 @@
+# Credenciales de clasp (tokens de Google) — nunca commitear
+.clasprc.json
+**/.clasprc.json
+
+.DS_Store
