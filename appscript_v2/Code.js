@@ -6,8 +6,8 @@
  * llamada HTTP a otro script), y registra cada guardado en la pestaña "Log"
  * del mismo Sheet.
  *
- * Esquema por línea (fila 2 = L1, fila 3 = L2), columnas B..G:
- *   B=Piezas, C=Rango HR, D=Trim, E=Calibre, F=Cliente, G=Acumulado
+ * Esquema por línea (fila 2 = L1, fila 3 = L2), columnas B..H:
+ *   B=Piezas, C=Rango HR, D=Trim, E=Calibre, F=Cliente, G=Acumulado, H=Supervisor
  * Fila 5 = Fecha (columna B, fórmula =HOY() propia del Sheet, no se toca).
  *
  * Publicar como Web App (Implementar > Nueva implementación > Aplicación web):
@@ -20,12 +20,17 @@ var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Debe coincidir con 
 var SHEET_ID = "1hkzQJJnTtBi_3k9LhlieLu8msHnoorS3Ikf5RsI8vgo";
 var SHEET_TAB = "Hoja 1";
 var LOG_TAB = "Log";
-var SLIDE_ID = "1SUnpb0vz5XmA5QDpOX2D5dU3UdPKa9CoE9KqP1ez8wo";
+// Transición: se sincroniza a las dos Slides (la vieja y la nueva que la va
+// a reemplazar). Cuando Pablo confirme, sacar el ID viejo de esta lista.
+var SLIDE_IDS = [
+  "1SUnpb0vz5XmA5QDpOX2D5dU3UdPKa9CoE9KqP1ez8wo", // Turno Filete (actual, en uso por OnSign)
+  "1RtT-RlhLnr26Y8HPAGPkY5QmjRQDw_yaLbe0xVcD06I"  // Turno Filete2 (reemplazo futuro)
+];
 var AREA_NAME = "Filete";
 
-// Orden de columnas B..G para cada línea.
-var FIELDS = ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado"];
-var FIELD_HEADERS = ["Piezas", "Rango HR", "Trim", "Calibre", "Cliente", "Acumulado"];
+// Orden de columnas B..H para cada línea.
+var FIELDS = ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"];
+var FIELD_HEADERS = ["Piezas", "Rango HR", "Trim", "Calibre", "Cliente", "Acumulado", "Supervisor"];
 
 function formatFecha_(fechaCell, tz) {
   if (Object.prototype.toString.call(fechaCell) === "[object Date]") {
@@ -44,14 +49,14 @@ function rowToLinea_(row) {
   var out = {};
   for (var i = 0; i < FIELDS.length; i++) {
     var val = row[i];
-    out[FIELDS[i]] = FIELDS[i] === "piezas" || FIELDS[i] === "acumulado" ? (Number(val) || 0) : String(val || "");
+    out[FIELDS[i]] = (FIELDS[i] === "piezas" || FIELDS[i] === "acumulado") ? (Number(val) || 0) : String(val || "");
   }
   return out;
 }
 
 function readData_() {
   var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_TAB);
-  var rows = sheet.getRange("B2:G3").getValues(); // fila2=L1, fila3=L2
+  var rows = sheet.getRange("B2:H3").getValues(); // fila2=L1, fila3=L2
   var fechaCell = sheet.getRange("B5").getValue();
   var tz = Session.getScriptTimeZone() || "America/Santiago";
   var result = {
@@ -77,34 +82,40 @@ function syncSheetToSlide_(sheet) {
   }
   try {
     var data = sheet.getDataRange().getValues();
-    var slide = SlidesApp.openById(SLIDE_ID).getSlides()[0];
-    var shapeByTag = {};
-    slide.getShapes().forEach(function (shape) {
-      var tag = (shape.getTitle() || "").trim();
-      if (!tag) return;
-      if (!shapeByTag[tag]) shapeByTag[tag] = [];
-      shapeByTag[tag].push(shape);
+    SLIDE_IDS.forEach(function (slideId) {
+      syncSheetToOneSlide_(data, slideId);
     });
-
-    var now = new Date();
-    for (var r = 0; r < data.length; r++) {
-      for (var c = 0; c < data[r].length; c++) {
-        var rawValue = data[r][c];
-        if (rawValue === "" || rawValue === null || rawValue === undefined) continue;
-        var tag = "R" + (r + 1) + "C" + (c + 1);
-        var shapes = shapeByTag[tag];
-        if (!shapes) continue; // todavía no existe ese shape en la Slide -- se ignora sin error
-        var formatted = formatValue_(rawValue, now);
-        shapes.forEach(function (shape) {
-          if (shape.getText().asString() !== formatted) {
-            shape.getText().setText(formatted);
-            Logger.log("syncSheetToSlide_: " + tag + " -> " + formatted);
-          }
-        });
-      }
-    }
   } finally {
     lock.releaseLock();
+  }
+}
+
+function syncSheetToOneSlide_(data, slideId) {
+  var slide = SlidesApp.openById(slideId).getSlides()[0];
+  var shapeByTag = {};
+  slide.getShapes().forEach(function (shape) {
+    var tag = (shape.getTitle() || "").trim();
+    if (!tag) return;
+    if (!shapeByTag[tag]) shapeByTag[tag] = [];
+    shapeByTag[tag].push(shape);
+  });
+
+  var now = new Date();
+  for (var r = 0; r < data.length; r++) {
+    for (var c = 0; c < data[r].length; c++) {
+      var rawValue = data[r][c];
+      if (rawValue === "" || rawValue === null || rawValue === undefined) continue;
+      var tag = "R" + (r + 1) + "C" + (c + 1);
+      var shapes = shapeByTag[tag];
+      if (!shapes) continue; // todavía no existe ese shape en la Slide -- se ignora sin error
+      var formatted = formatValue_(rawValue, now);
+      shapes.forEach(function (shape) {
+        if (shape.getText().asString() !== formatted) {
+          shape.getText().setText(formatted);
+          Logger.log("syncSheetToSlide_: [" + slideId + "] " + tag + " -> " + formatted);
+        }
+      });
+    }
   }
 }
 
@@ -128,15 +139,16 @@ function writeData_(params) {
   var sheet = ss.getSheetByName(SHEET_TAB);
 
   // Fuerza texto plano en las columnas de texto (Rango HR, Trim, Calibre,
-  // Cliente) para que Sheets no las autoconvierta a fecha/número cuando el
-  // valor "parece" una fecha (ej. Rango HR "10-11") — mismo bug que ya
-  // arreglamos para la celda Fecha.
+  // Cliente, Supervisor) para que Sheets no las autoconvierta a fecha/número
+  // cuando el valor "parece" una fecha (ej. Rango HR "10-11") — mismo bug que
+  // ya arreglamos para la celda Fecha.
   sheet.getRange("C2:F3").setNumberFormat("@");
+  sheet.getRange("H2:H3").setNumberFormat("@");
 
   var row1 = lineaToRow_(params, "l1_");
   var row2 = lineaToRow_(params, "l2_");
   Logger.log("writeData_: L1=" + JSON.stringify(row1) + " L2=" + JSON.stringify(row2));
-  sheet.getRange("B2:G3").setValues([row1, row2]);
+  sheet.getRange("B2:H3").setValues([row1, row2]);
   // B5 (Fecha) no se toca: queda como fórmula =HOY() propia del Sheet.
 
   var tz = Session.getScriptTimeZone() || "America/Santiago";
@@ -167,13 +179,13 @@ function logHeaderRow_() {
 
 function setupHeaders_() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
-  ss.getSheetByName(SHEET_TAB).getRange("B1:G1").setValues([FIELD_HEADERS]);
+  ss.getSheetByName(SHEET_TAB).getRange("B1:H1").setValues([FIELD_HEADERS]);
 
   var logSheet = ss.getSheetByName(LOG_TAB);
   if (!logSheet) {
     logSheet = ss.insertSheet(LOG_TAB);
   }
-  logSheet.getRange(1, 1, 1, 15).setValues([logHeaderRow_()]);
+  logSheet.getRange(1, 1, 1, logHeaderRow_().length).setValues([logHeaderRow_()]);
 }
 
 function jsonOutput_(obj) {
