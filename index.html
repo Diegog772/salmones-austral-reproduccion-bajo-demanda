@@ -562,6 +562,10 @@
             <label for="l1-acumulado">Acumulado</label>
             <input id="l1-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
+          <div class="field">
+            <label for="l1-supervisor">Supervisor</label>
+            <input id="l1-supervisor" type="text" placeholder="Supervisor">
+          </div>
         </div>
       </div>
 
@@ -591,6 +595,10 @@
           <div class="field">
             <label for="l2-acumulado">Acumulado</label>
             <input id="l2-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="l2-supervisor">Supervisor</label>
+            <input id="l2-supervisor" type="text" placeholder="Supervisor">
           </div>
         </div>
       </div>
@@ -787,7 +795,7 @@
   });
 
   // ---- Resultados por Área (Filete) ----
-  const RESULT_FIELDS = ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado"];
+  const RESULT_FIELDS = ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"];
   const resultInputs = { l1: {}, l2: {} };
   ["l1", "l2"].forEach((linea) => {
     RESULT_FIELDS.forEach((field) => {
