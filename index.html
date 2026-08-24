@@ -539,7 +539,7 @@
         <h3 class="linea-title">Línea 1</h3>
         <div class="field-grid">
           <div class="field">
-            <label for="l1-piezas">Piezas</label>
+            <label for="l1-piezas">Piezas Hr</label>
             <input id="l1-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div class="field">
@@ -569,7 +569,7 @@
         <h3 class="linea-title">Línea 2</h3>
         <div class="field-grid">
           <div class="field">
-            <label for="l2-piezas">Piezas</label>
+            <label for="l2-piezas">Piezas Hr</label>
             <input id="l2-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div class="field">
@@ -842,7 +842,7 @@
     const l1 = getLineaValues("l1");
     const l2 = getLineaValues("l2");
     if (l1.piezas === "" || l2.piezas === "" || isNaN(Number(l1.piezas)) || isNaN(Number(l2.piezas))) {
-      showToast("⚠️ Ingresa un valor numérico válido de Piezas para ambas líneas.", true);
+      showToast("⚠️ Ingresa un valor numérico válido de Piezas Hr para ambas líneas.", true);
       return;
     }
 
