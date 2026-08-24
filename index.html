@@ -290,7 +290,7 @@
     margin-top: 4px;
   }
 
-  #save-results-btn {
+  .btn-save-results {
     padding: 14px;
     font-family: inherit;
     font-weight: 700;
@@ -302,11 +302,11 @@
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
   }
-  #save-results-btn:hover { background: var(--accent-light); }
-  #save-results-btn:active { transform: scale(0.98); }
-  #save-results-btn:disabled { opacity: 0.6; cursor: wait; }
+  .btn-save-results:hover { background: var(--accent-light); }
+  .btn-save-results:active { transform: scale(0.98); }
+  .btn-save-results:disabled { opacity: 0.6; cursor: wait; }
 
-  #activate-screen-btn {
+  .btn-activate-screen {
     padding: 12px;
     font-family: inherit;
     font-weight: 700;
@@ -318,11 +318,11 @@
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
   }
-  #activate-screen-btn:hover { background: var(--accent); color: #fff; }
-  #activate-screen-btn:active { transform: scale(0.98); }
-  #activate-screen-btn:disabled { opacity: 0.6; cursor: wait; }
+  .btn-activate-screen:hover { background: var(--accent); color: #fff; }
+  .btn-activate-screen:active { transform: scale(0.98); }
+  .btn-activate-screen:disabled { opacity: 0.6; cursor: wait; }
 
-  #stop-screen-btn {
+  .btn-stop-screen {
     padding: 12px;
     font-family: inherit;
     font-weight: 700;
@@ -334,11 +334,11 @@
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
   }
-  #stop-screen-btn:hover { background: var(--danger); color: #fff; }
-  #stop-screen-btn:active { transform: scale(0.98); }
-  #stop-screen-btn:disabled { opacity: 0.6; cursor: wait; }
+  .btn-stop-screen:hover { background: var(--danger); color: #fff; }
+  .btn-stop-screen:active { transform: scale(0.98); }
+  .btn-stop-screen:disabled { opacity: 0.6; cursor: wait; }
 
-  #results-status {
+  .results-status {
     min-height: 18px;
     margin-top: 12px;
     font-size: 0.85rem;
@@ -639,11 +639,11 @@
       </div>
 
       <div class="results-actions">
-        <button id="filete-save-results-btn" type="button">💾 Guardar resultados</button>
-        <button id="filete-activate-screen-btn" type="button">▶️ Activar pantalla</button>
-        <button id="filete-stop-screen-btn" type="button">⏹ Detener pantalla</button>
+        <button id="filete-save-results-btn" class="btn-save-results" type="button">💾 Guardar resultados</button>
+        <button id="filete-activate-screen-btn" class="btn-activate-screen" type="button">▶️ Activar pantalla</button>
+        <button id="filete-stop-screen-btn" class="btn-stop-screen" type="button">⏹ Detener pantalla</button>
       </div>
-      <p id="filete-results-status"></p>
+      <p id="filete-results-status" class="results-status"></p>
     </div>
 
     <div class="results-card" data-area="porcionado">
@@ -662,11 +662,11 @@
       </div>
 
       <div class="results-actions">
-        <button id="porcionado-save-results-btn" type="button">💾 Guardar resultados</button>
-        <button id="porcionado-activate-screen-btn" type="button">▶️ Activar pantalla</button>
-        <button id="porcionado-stop-screen-btn" type="button">⏹ Detener pantalla</button>
+        <button id="porcionado-save-results-btn" class="btn-save-results" type="button">💾 Guardar resultados</button>
+        <button id="porcionado-activate-screen-btn" class="btn-activate-screen" type="button">▶️ Activar pantalla</button>
+        <button id="porcionado-stop-screen-btn" class="btn-stop-screen" type="button">⏹ Detener pantalla</button>
       </div>
-      <p id="porcionado-results-status"></p>
+      <p id="porcionado-results-status" class="results-status"></p>
     </div>
   </div>
 
