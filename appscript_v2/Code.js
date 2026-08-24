@@ -1,14 +1,13 @@
 /**
- * Salmones Austral — Backend UNIFICADO de "Resultados por Área" (Filete).
+ * Salmones Austral — Backend UNIFICADO de "Resultados por Área" (multi-área).
  *
- * Un solo proyecto, un solo dueño (Diego): escribe los datos de Línea1/Línea2
- * en el Sheet propio, sincroniza la Slide propia EN EL MISMO PROCESO (sin
- * llamada HTTP a otro script), y registra cada guardado en la pestaña "Log"
- * del mismo Sheet.
+ * Un solo proyecto: escribe los datos de cada área en su propia pestaña del
+ * Sheet, sincroniza las Slides correspondientes EN EL MISMO PROCESO (sin
+ * llamada HTTP a otro script), y registra cada guardado en la pestaña de Log
+ * propia de esa área — todo dentro del mismo Sheet (SHEET_ID).
  *
- * Esquema por línea (fila 2 = L1, fila 3 = L2), columnas B..H:
- *   B=Piezas, C=Rango HR, D=Trim, E=Calibre, F=Cliente, G=Acumulado, H=Supervisor
- * Fila 5 = Fecha (columna B, fórmula =HOY() propia del Sheet, no se toca).
+ * Agregar un área nueva = agregar una entrada a AREAS. No hace falta tocar
+ * el resto del código: readData_/writeData_/setupHeaders_ son genéricos.
  *
  * Publicar como Web App (Implementar > Nueva implementación > Aplicación web):
  *   - Ejecutar como: Yo
@@ -18,19 +17,45 @@
 var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Debe coincidir con index.html.
 
 var SHEET_ID = "1hkzQJJnTtBi_3k9LhlieLu8msHnoorS3Ikf5RsI8vgo";
-var SHEET_TAB = "Hoja 1";
-var LOG_TAB = "Log";
-// Transición: se sincroniza a las dos Slides (la vieja y la nueva que la va
-// a reemplazar). Cuando Pablo confirme, sacar el ID viejo de esta lista.
-var SLIDE_IDS = [
-  "1SUnpb0vz5XmA5QDpOX2D5dU3UdPKa9CoE9KqP1ez8wo", // Turno Filete (actual, en uso por OnSign)
-  "1RtT-RlhLnr26Y8HPAGPkY5QmjRQDw_yaLbe0xVcD06I"  // Turno Filete2 (reemplazo futuro)
-];
-var AREA_NAME = "Filete";
 
-// Orden de columnas B..H para cada línea.
-var FIELDS = ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"];
-var FIELD_HEADERS = ["Piezas", "Rango HR", "Trim", "Calibre", "Cliente", "Acumulado", "Supervisor"];
+var AREAS = {
+  filete: {
+    label: "Filete",
+    sheetTab: "Filete",
+    logTab: "Log",
+    hasLineas: true, // 2 filas de datos (fila2=L1, fila3=L2)
+    fields: ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"],
+    fieldHeaders: ["Piezas", "Rango HR", "Trim", "Calibre", "Cliente", "Acumulado", "Supervisor"],
+    numericFields: ["piezas", "acumulado"],
+    // Transición: se sincroniza a las dos Slides (la vieja y la nueva que la
+    // va a reemplazar). Cuando Pablo confirme, sacar el ID viejo de esta lista.
+    slideIds: [
+      "1SUnpb0vz5XmA5QDpOX2D5dU3UdPKa9CoE9KqP1ez8wo", // Turno Filete (actual, en uso por OnSign)
+      "1RtT-RlhLnr26Y8HPAGPkY5QmjRQDw_yaLbe0xVcD06I"  // Turno Filete2 (reemplazo futuro)
+    ]
+  },
+  porcionado: {
+    label: "Porcionado",
+    sheetTab: "Porcionado",
+    logTab: "Log Porcionado",
+    hasLineas: false, // 1 sola fila de datos, sin L1/L2
+    fields: ["kilos", "kilosHr"],
+    fieldHeaders: ["Kilos", "Kilos Hr"],
+    numericFields: ["kilos", "kilosHr"],
+    slideIds: [] // todavía sin Slide conectada
+  }
+};
+
+// Convierte un número de columna 1-based a su letra (2 -> "B", 8 -> "H").
+function colLetter_(n) {
+  var s = "";
+  while (n > 0) {
+    var rem = (n - 1) % 26;
+    s = String.fromCharCode(65 + rem) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
 
 function formatFecha_(fechaCell, tz) {
   if (Object.prototype.toString.call(fechaCell) === "[object Date]") {
@@ -45,26 +70,45 @@ function formatFecha_(fechaCell, tz) {
   return String(fechaCell || "");
 }
 
-function rowToLinea_(row) {
+function rowToObj_(row, area) {
   var out = {};
-  for (var i = 0; i < FIELDS.length; i++) {
+  area.fields.forEach(function (field, i) {
     var val = row[i];
-    out[FIELDS[i]] = (FIELDS[i] === "piezas" || FIELDS[i] === "acumulado") ? (Number(val) || 0) : String(val || "");
-  }
+    var isNumeric = area.numericFields.indexOf(field) !== -1;
+    out[field] = isNumeric ? (Number(val) || 0) : String(val || "");
+  });
   return out;
 }
 
-function readData_() {
-  var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_TAB);
-  var rows = sheet.getRange("B2:H3").getValues(); // fila2=L1, fila3=L2
-  var fechaCell = sheet.getRange("B5").getValue();
+function objToRow_(params, area, prefix) {
+  return area.fields.map(function (field) {
+    var raw = params[(prefix || "") + field];
+    var isNumeric = area.numericFields.indexOf(field) !== -1;
+    return isNumeric ? (Number(raw) || 0) : (raw || "");
+  });
+}
+
+function fechaRow_(area) {
+  return area.hasLineas ? 5 : 4; // 1 fila menos si no hay L2
+}
+
+function getAreaSheet_(ss, area) {
+  return ss.getSheetByName(area.sheetTab) || ss.insertSheet(area.sheetTab);
+}
+
+function readData_(area) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getAreaSheet_(ss, area);
+  var lastRow = area.hasLineas ? 3 : 2;
+  var lastCol = colLetter_(area.fields.length + 1);
+  var rows = sheet.getRange("B2:" + lastCol + lastRow).getValues();
   var tz = Session.getScriptTimeZone() || "America/Santiago";
-  var result = {
-    l1: rowToLinea_(rows[0]),
-    l2: rowToLinea_(rows[1]),
-    fecha: formatFecha_(fechaCell, tz)
-  };
-  Logger.log("readData_: " + JSON.stringify(result));
+  var fecha = formatFecha_(sheet.getRange("B" + fechaRow_(area)).getValue(), tz);
+
+  var result = area.hasLineas
+    ? { l1: rowToObj_(rows[0], area), l2: rowToObj_(rows[1], area), fecha: fecha }
+    : Object.assign(rowToObj_(rows[0], area), { fecha: fecha });
+  Logger.log("readData_[" + area.label + "]: " + JSON.stringify(result));
   return result;
 }
 
@@ -72,7 +116,8 @@ function readData_() {
 // Genérico: cualquier celda con contenido se copia al shape de la Slide
 // tageado R{fila}C{columna} — agregar columnas nuevas no requiere tocar esto,
 // solo hace falta que exista el shape tageado correspondiente en la Slide.
-function syncSheetToSlide_(sheet) {
+function syncSheetToSlide_(sheet, slideIds) {
+  if (!slideIds || !slideIds.length) return;
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
@@ -82,7 +127,7 @@ function syncSheetToSlide_(sheet) {
   }
   try {
     var data = sheet.getDataRange().getValues();
-    SLIDE_IDS.forEach(function (slideId) {
+    slideIds.forEach(function (slideId) {
       syncSheetToOneSlide_(data, slideId);
     });
   } finally {
@@ -126,66 +171,79 @@ function formatValue_(rawValue, now) {
   return typeof rawValue === "number" ? rawValue.toLocaleString("es-CL") : String(rawValue);
 }
 
-function lineaToRow_(params, prefix) {
-  return FIELDS.map(function (field) {
-    var raw = params[prefix + field];
-    if (field === "piezas" || field === "acumulado") return Number(raw) || 0;
-    return raw || "";
-  });
-}
-
-function writeData_(params) {
+function writeData_(params, area) {
   var ss = SpreadsheetApp.openById(SHEET_ID); // 1 sola apertura, reutilizada abajo
-  var sheet = ss.getSheetByName(SHEET_TAB);
+  var sheet = getAreaSheet_(ss, area);
+  var lastRow = area.hasLineas ? 3 : 2;
 
-  // Fuerza texto plano en las columnas de texto (Rango HR, Trim, Calibre,
-  // Cliente, Supervisor) para que Sheets no las autoconvierta a fecha/número
-  // cuando el valor "parece" una fecha (ej. Rango HR "10-11") — mismo bug que
-  // ya arreglamos para la celda Fecha.
-  sheet.getRange("C2:F3").setNumberFormat("@");
-  sheet.getRange("H2:H3").setNumberFormat("@");
+  // Fuerza texto plano en las columnas no numéricas para que Sheets no las
+  // autoconvierta a fecha/número cuando el valor "parece" una fecha (ej.
+  // Rango HR "10-11") — mismo bug que ya arreglamos para la celda Fecha.
+  area.fields.forEach(function (field, i) {
+    if (area.numericFields.indexOf(field) !== -1) return;
+    var col = colLetter_(i + 2);
+    sheet.getRange(col + "2:" + col + lastRow).setNumberFormat("@");
+  });
 
-  var row1 = lineaToRow_(params, "l1_");
-  var row2 = lineaToRow_(params, "l2_");
-  Logger.log("writeData_: L1=" + JSON.stringify(row1) + " L2=" + JSON.stringify(row2));
-  sheet.getRange("B2:H3").setValues([row1, row2]);
-  // B5 (Fecha) no se toca: queda como fórmula =HOY() propia del Sheet.
+  var rows = [objToRow_(params, area, area.hasLineas ? "l1_" : "")];
+  if (area.hasLineas) rows.push(objToRow_(params, area, "l2_"));
+
+  var lastCol = colLetter_(area.fields.length + 1);
+  Logger.log("writeData_[" + area.label + "]: " + JSON.stringify(rows));
+  sheet.getRange("B2:" + lastCol + lastRow).setValues(rows);
+  // La celda de Fecha no se toca: queda como fórmula =TODAY() propia del Sheet.
 
   var tz = Session.getScriptTimeZone() || "America/Santiago";
   var dia = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy");
   var hora = Utilities.formatDate(new Date(), tz, "HH:mm:ss");
 
-  var logSheet = ss.getSheetByName(LOG_TAB);
+  var logSheet = ss.getSheetByName(area.logTab);
   if (!logSheet) {
-    logSheet = ss.insertSheet(LOG_TAB);
-    logSheet.appendRow(logHeaderRow_());
+    logSheet = ss.insertSheet(area.logTab);
+    logSheet.appendRow(logHeaderRow_(area));
   }
-  logSheet.appendRow([dia, hora, AREA_NAME].concat(row1, row2));
+  var logRow = [dia, hora, area.label].concat(rows[0]);
+  if (area.hasLineas) logRow = logRow.concat(rows[1]);
+  logSheet.appendRow(logRow);
 
-  syncSheetToSlide_(sheet);
+  syncSheetToSlide_(sheet, area.slideIds);
 
-  var fecha = formatFecha_(sheet.getRange("B5").getValue(), tz);
-  var result = { l1: rowToLinea_(row1), l2: rowToLinea_(row2), fecha: fecha };
-  Logger.log("writeData_: resultado final -> " + JSON.stringify(result));
+  var fecha = formatFecha_(sheet.getRange("B" + fechaRow_(area)).getValue(), tz);
+  var result = area.hasLineas
+    ? { l1: rowToObj_(rows[0], area), l2: rowToObj_(rows[1], area), fecha: fecha }
+    : Object.assign(rowToObj_(rows[0], area), { fecha: fecha });
+  Logger.log("writeData_[" + area.label + "]: resultado final -> " + JSON.stringify(result));
   return result;
 }
 
-function logHeaderRow_() {
+function logHeaderRow_(area) {
+  if (!area.hasLineas) {
+    return ["Día", "Hora", "Área"].concat(area.fieldHeaders);
+  }
   return ["Día", "Hora", "Área"].concat(
-    FIELD_HEADERS.map(function (h) { return "L1 " + h; }),
-    FIELD_HEADERS.map(function (h) { return "L2 " + h; })
+    area.fieldHeaders.map(function (h) { return "L1 " + h; }),
+    area.fieldHeaders.map(function (h) { return "L2 " + h; })
   );
 }
 
-function setupHeaders_() {
+function setupHeaders_(area) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
-  ss.getSheetByName(SHEET_TAB).getRange("B1:H1").setValues([FIELD_HEADERS]);
+  var sheet = getAreaSheet_(ss, area);
+  var lastCol = colLetter_(area.fieldHeaders.length + 1);
+  sheet.getRange("B1:" + lastCol + "1").setValues([area.fieldHeaders]);
 
-  var logSheet = ss.getSheetByName(LOG_TAB);
+  // Asegura la celda de Fecha (label + fórmula =HOY()) — no pisa nada si ya
+  // existía con el mismo valor.
+  var fr = fechaRow_(area);
+  sheet.getRange("A" + fr).setValue("Fecha");
+  sheet.getRange("B" + fr).setFormula("=TODAY()"); // Apps Script exige el nombre en inglés aunque el Sheet esté en español
+
+  var logSheet = ss.getSheetByName(area.logTab);
   if (!logSheet) {
-    logSheet = ss.insertSheet(LOG_TAB);
+    logSheet = ss.insertSheet(area.logTab);
   }
-  logSheet.getRange(1, 1, 1, logHeaderRow_().length).setValues([logHeaderRow_()]);
+  var header = logHeaderRow_(area);
+  logSheet.getRange(1, 1, 1, header.length).setValues([header]);
 }
 
 function jsonOutput_(obj) {
@@ -197,9 +255,12 @@ function doGet(e) {
   var params = (e && e.parameter) || {};
   var action = params.action || "read";
 
+  var area = AREAS[params.area || "filete"];
+  if (!area) return jsonOutput_({ error: "unknown_area" });
+
   if (action === "setup") {
     if (params.key !== WRITE_KEY) return jsonOutput_({ error: "unauthorized" });
-    setupHeaders_();
+    setupHeaders_(area);
     return jsonOutput_({ ok: true });
   }
 
@@ -207,10 +268,10 @@ function doGet(e) {
     if (params.key !== WRITE_KEY) {
       return jsonOutput_({ error: "unauthorized" });
     }
-    var data = writeData_(params);
+    var data = writeData_(params, area);
     data.ok = true;
     return jsonOutput_(data);
   }
 
-  return jsonOutput_(readData_());
+  return jsonOutput_(readData_(area));
 }

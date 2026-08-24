@@ -178,7 +178,35 @@
   .tab-panel.active { display: flex; }
 
   /* ---- Resultados por área ---- */
+  .area-tabs {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .area-tab-btn {
+    flex: 1;
+    padding: 10px 8px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--bg-elevated);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .area-tab-btn.active {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent-light);
+  }
+
   .results-card {
+    display: none;
     width: 100%;
     padding: 24px 20px;
     text-align: center;
@@ -187,6 +215,8 @@
     border-radius: 16px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   }
+
+  .results-card.active { display: block; }
 
   .results-card .icon { display: block; font-size: 1.8rem; margin-bottom: 8px; }
   .results-card .area-name { display: block; font-weight: 700; font-size: 1.1rem; margin-bottom: 20px; }
@@ -531,7 +561,12 @@
   </div>
 
   <div id="tab-resultados" class="tab-panel">
-    <div class="results-card">
+    <div class="area-tabs">
+      <button class="area-tab-btn active" type="button" data-area="filete">🐟 Filete</button>
+      <button class="area-tab-btn" type="button" data-area="porcionado">🔪 Porcionado</button>
+    </div>
+
+    <div class="results-card active" data-area="filete">
       <span class="icon">🐟</span>
       <span class="area-name">Filete — Resultados por línea</span>
 
@@ -539,32 +574,32 @@
         <h3 class="linea-title">Línea 1</h3>
         <div class="field-grid">
           <div class="field">
-            <label for="l1-piezas">Piezas Hr</label>
-            <input id="l1-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+            <label for="filete-l1-piezas">Piezas Hr</label>
+            <input id="filete-l1-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div class="field">
-            <label for="l1-rangoHr">Rango HR</label>
-            <input id="l1-rangoHr" type="text" placeholder="10-11">
+            <label for="filete-l1-rangoHr">Rango HR</label>
+            <input id="filete-l1-rangoHr" type="text" placeholder="10-11">
           </div>
           <div class="field">
-            <label for="l1-trim">Trim</label>
-            <input id="l1-trim" type="text" placeholder="C SIN ESCAMAS">
+            <label for="filete-l1-trim">Trim</label>
+            <input id="filete-l1-trim" type="text" placeholder="C SIN ESCAMAS">
           </div>
           <div class="field">
-            <label for="l1-calibre">Calibre</label>
-            <input id="l1-calibre" type="text" placeholder="3,2-5,2">
+            <label for="filete-l1-calibre">Calibre</label>
+            <input id="filete-l1-calibre" type="text" placeholder="3,2-5,2">
           </div>
           <div class="field field-wide">
-            <label for="l1-cliente">Cliente</label>
-            <input id="l1-cliente" type="text" placeholder="Cliente">
+            <label for="filete-l1-cliente">Cliente</label>
+            <input id="filete-l1-cliente" type="text" placeholder="Cliente">
           </div>
           <div class="field">
-            <label for="l1-acumulado">Acumulado</label>
-            <input id="l1-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+            <label for="filete-l1-acumulado">Acumulado</label>
+            <input id="filete-l1-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div class="field">
-            <label for="l1-supervisor">Supervisor</label>
-            <input id="l1-supervisor" type="text" placeholder="Supervisor">
+            <label for="filete-l1-supervisor">Supervisor</label>
+            <input id="filete-l1-supervisor" type="text" placeholder="Supervisor">
           </div>
         </div>
       </div>
@@ -573,42 +608,65 @@
         <h3 class="linea-title">Línea 2</h3>
         <div class="field-grid">
           <div class="field">
-            <label for="l2-piezas">Piezas Hr</label>
-            <input id="l2-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+            <label for="filete-l2-piezas">Piezas Hr</label>
+            <input id="filete-l2-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div class="field">
-            <label for="l2-rangoHr">Rango HR</label>
-            <input id="l2-rangoHr" type="text" placeholder="10-11">
+            <label for="filete-l2-rangoHr">Rango HR</label>
+            <input id="filete-l2-rangoHr" type="text" placeholder="10-11">
           </div>
           <div class="field">
-            <label for="l2-trim">Trim</label>
-            <input id="l2-trim" type="text" placeholder="D FRESCO">
+            <label for="filete-l2-trim">Trim</label>
+            <input id="filete-l2-trim" type="text" placeholder="D FRESCO">
           </div>
           <div class="field">
-            <label for="l2-calibre">Calibre</label>
-            <input id="l2-calibre" type="text" placeholder="5,5-6,4">
+            <label for="filete-l2-calibre">Calibre</label>
+            <input id="filete-l2-calibre" type="text" placeholder="5,5-6,4">
           </div>
           <div class="field field-wide">
-            <label for="l2-cliente">Cliente</label>
-            <input id="l2-cliente" type="text" placeholder="Cliente">
+            <label for="filete-l2-cliente">Cliente</label>
+            <input id="filete-l2-cliente" type="text" placeholder="Cliente">
           </div>
           <div class="field">
-            <label for="l2-acumulado">Acumulado</label>
-            <input id="l2-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+            <label for="filete-l2-acumulado">Acumulado</label>
+            <input id="filete-l2-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           </div>
           <div class="field">
-            <label for="l2-supervisor">Supervisor</label>
-            <input id="l2-supervisor" type="text" placeholder="Supervisor">
+            <label for="filete-l2-supervisor">Supervisor</label>
+            <input id="filete-l2-supervisor" type="text" placeholder="Supervisor">
           </div>
         </div>
       </div>
 
       <div class="results-actions">
-        <button id="save-results-btn" type="button">💾 Guardar resultados</button>
-        <button id="activate-screen-btn" type="button">▶️ Activar pantalla</button>
-        <button id="stop-screen-btn" type="button">⏹ Detener pantalla</button>
+        <button id="filete-save-results-btn" type="button">💾 Guardar resultados</button>
+        <button id="filete-activate-screen-btn" type="button">▶️ Activar pantalla</button>
+        <button id="filete-stop-screen-btn" type="button">⏹ Detener pantalla</button>
       </div>
-      <p id="results-status"></p>
+      <p id="filete-results-status"></p>
+    </div>
+
+    <div class="results-card" data-area="porcionado">
+      <span class="icon">🔪</span>
+      <span class="area-name">Porcionado — Resultados</span>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="porcionado-kilosHr">Kilos Hr</label>
+          <input id="porcionado-kilosHr" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="porcionado-kilos">Kilos Acumulados</label>
+          <input id="porcionado-kilos" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button id="porcionado-save-results-btn" type="button">💾 Guardar resultados</button>
+        <button id="porcionado-activate-screen-btn" type="button">▶️ Activar pantalla</button>
+        <button id="porcionado-stop-screen-btn" type="button">⏹ Detener pantalla</button>
+      </div>
+      <p id="porcionado-results-status"></p>
     </div>
   </div>
 
@@ -629,8 +687,6 @@
   // Escribe el Sheet propio Y sincroniza la Slide propia en una sola llamada.
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwEuz_J3PMHXpj0HLjddFao8WxGAZGb8DSrWkIxDAjBj0ojmdKMFUBvQuieOsGX2li/exec";
   const APPS_SCRIPT_WRITE_KEY = "sa-resultados-2026";
-  const FILETE_RESULTS_PLAY_URL = "https://app.onsign.tv/play/qweX0xIfnRaNrQTBn00sKjem";
-  const FILETE_RESULTS_STOP_URL = "https://app.onsign.tv/stop/CfJDlpSRvUXiNWc9iUUxbBlB";
 
   const loginScreen = document.getElementById("login-screen");
   const appScreen = document.getElementById("app-screen");
@@ -789,123 +845,213 @@
       tabBtns.forEach((b) => b.classList.toggle("active", b === btn));
       tabPanels.forEach((p) => p.classList.toggle("active", p.id === btn.dataset.tab));
       if (btn.dataset.tab === "tab-resultados") {
-        loadResultados();
+        loadResultados(currentArea);
       }
     });
   });
 
-  // ---- Resultados por Área (Filete) ----
-  const RESULT_FIELDS = ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"];
-  const resultInputs = { l1: {}, l2: {} };
-  ["l1", "l2"].forEach((linea) => {
-    RESULT_FIELDS.forEach((field) => {
-      resultInputs[linea][field] = document.getElementById(`${linea}-${field}`);
-    });
+  // ---- Resultados por Área (multi-área) ----
+  const AREA_CONFIGS = {
+    filete: {
+      hasLineas: true,
+      fields: ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"],
+      requiredField: "piezas",
+      requiredLabel: "Piezas Hr",
+      playUrl: "https://app.onsign.tv/play/qweX0xIfnRaNrQTBn00sKjem",
+      stopUrl: "https://app.onsign.tv/stop/CfJDlpSRvUXiNWc9iUUxbBlB"
+    },
+    porcionado: {
+      hasLineas: false,
+      fields: ["kilos", "kilosHr"],
+      requiredField: "kilos",
+      requiredLabel: "Kilos Acumulados",
+      playUrl: "https://app.onsign.tv/play/8kgxOPqSfxIylS9Joa9eCrUH",
+      stopUrl: "https://app.onsign.tv/stop/FC73j0Hut9L8QDZCsTVVJ1hx"
+    }
+  };
+
+  const resultInputs = {};
+  const areaEls = {};
+  Object.keys(AREA_CONFIGS).forEach((area) => {
+    const cfg = AREA_CONFIGS[area];
+    if (cfg.hasLineas) {
+      resultInputs[area] = { l1: {}, l2: {} };
+      ["l1", "l2"].forEach((linea) => {
+        cfg.fields.forEach((field) => {
+          resultInputs[area][linea][field] = document.getElementById(`${area}-${linea}-${field}`);
+        });
+      });
+    } else {
+      resultInputs[area] = {};
+      cfg.fields.forEach((field) => {
+        resultInputs[area][field] = document.getElementById(`${area}-${field}`);
+      });
+    }
+    areaEls[area] = {
+      saveBtn: document.getElementById(`${area}-save-results-btn`),
+      activateBtn: document.getElementById(`${area}-activate-screen-btn`),
+      stopBtn: document.getElementById(`${area}-stop-screen-btn`),
+      status: document.getElementById(`${area}-results-status`)
+    };
   });
 
-  const saveResultsBtn = document.getElementById("save-results-btn");
-  const activateScreenBtn = document.getElementById("activate-screen-btn");
-  const stopScreenBtn = document.getElementById("stop-screen-btn");
-  const resultsStatus = document.getElementById("results-status");
-
-  function setResultsBusy(busy) {
-    saveResultsBtn.disabled = busy;
-    activateScreenBtn.disabled = busy;
-    stopScreenBtn.disabled = busy;
+  function setResultsBusy(area, busy) {
+    const els = areaEls[area];
+    els.saveBtn.disabled = busy;
+    els.activateBtn.disabled = busy;
+    els.stopBtn.disabled = busy;
   }
 
-  function setLineaValues(linea, data) {
+  function setAreaValues(area, data) {
     if (!data) return;
-    RESULT_FIELDS.forEach((field) => {
-      const el = resultInputs[linea][field];
+    const cfg = AREA_CONFIGS[area];
+    if (cfg.hasLineas) {
+      ["l1", "l2"].forEach((linea) => {
+        const lineaData = data[linea];
+        if (!lineaData) return;
+        cfg.fields.forEach((field) => {
+          const el = resultInputs[area][linea][field];
+          const val = lineaData[field];
+          if (el && val !== undefined && val !== null) el.value = val;
+        });
+      });
+      return;
+    }
+    cfg.fields.forEach((field) => {
+      const el = resultInputs[area][field];
       const val = data[field];
       if (el && val !== undefined && val !== null) el.value = val;
     });
   }
 
-  function getLineaValues(linea) {
+  function getAreaValues(area) {
+    const cfg = AREA_CONFIGS[area];
+    if (cfg.hasLineas) {
+      const out = { l1: {}, l2: {} };
+      ["l1", "l2"].forEach((linea) => {
+        cfg.fields.forEach((field) => {
+          const el = resultInputs[area][linea][field];
+          out[linea][field] = el ? el.value.trim() : "";
+        });
+      });
+      return out;
+    }
     const out = {};
-    RESULT_FIELDS.forEach((field) => {
-      const el = resultInputs[linea][field];
+    cfg.fields.forEach((field) => {
+      const el = resultInputs[area][field];
       out[field] = el ? el.value.trim() : "";
     });
     return out;
   }
 
-  async function loadResultados() {
-    resultsStatus.textContent = "Cargando valores actuales…";
+  function hasValidRequired(area, values) {
+    const cfg = AREA_CONFIGS[area];
+    if (cfg.hasLineas) {
+      return values.l1[cfg.requiredField] !== "" && values.l2[cfg.requiredField] !== ""
+        && !isNaN(Number(values.l1[cfg.requiredField])) && !isNaN(Number(values.l2[cfg.requiredField]));
+    }
+    return values[cfg.requiredField] !== "" && !isNaN(Number(values[cfg.requiredField]));
+  }
+
+  async function loadResultados(area) {
+    const els = areaEls[area];
+    els.status.textContent = "Cargando valores actuales…";
     try {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=read`);
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=read&area=${area}`);
       const data = await res.json();
-      setLineaValues("l1", data.l1);
-      setLineaValues("l2", data.l2);
-      resultsStatus.textContent = data.fecha ? `Último guardado: ${data.fecha}` : "";
+      setAreaValues(area, data);
+      els.status.textContent = data.fecha ? `Último guardado: ${data.fecha}` : "";
     } catch (err) {
-      resultsStatus.textContent = "";
+      els.status.textContent = "";
       showToast("⚠️ No se pudieron cargar los valores actuales.", true);
     }
   }
 
-  saveResultsBtn.addEventListener("click", async () => {
-    const l1 = getLineaValues("l1");
-    const l2 = getLineaValues("l2");
-    if (l1.piezas === "" || l2.piezas === "" || isNaN(Number(l1.piezas)) || isNaN(Number(l2.piezas))) {
-      showToast("⚠️ Ingresa un valor numérico válido de Piezas Hr para ambas líneas.", true);
-      return;
-    }
+  Object.keys(AREA_CONFIGS).forEach((area) => {
+    const cfg = AREA_CONFIGS[area];
+    const els = areaEls[area];
 
-    setResultsBusy(true);
-    resultsStatus.textContent = "Guardando…";
-    try {
-      const params = new URLSearchParams({ action: "update", key: APPS_SCRIPT_WRITE_KEY });
-      RESULT_FIELDS.forEach((field) => {
-        params.set(`l1_${field}`, l1[field]);
-        params.set(`l2_${field}`, l2[field]);
-      });
-      const res = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+    els.saveBtn.addEventListener("click", async () => {
+      const values = getAreaValues(area);
+      if (!hasValidRequired(area, values)) {
+        const suffix = cfg.hasLineas ? " para ambas líneas" : "";
+        showToast(`⚠️ Ingresa un valor numérico válido de ${cfg.requiredLabel}${suffix}.`, true);
+        return;
+      }
 
-      await fetch(FILETE_RESULTS_PLAY_URL, { mode: "no-cors" });
+      setResultsBusy(area, true);
+      els.status.textContent = "Guardando…";
+      try {
+        const params = new URLSearchParams({ action: "update", key: APPS_SCRIPT_WRITE_KEY, area });
+        if (cfg.hasLineas) {
+          cfg.fields.forEach((field) => {
+            params.set(`l1_${field}`, values.l1[field]);
+            params.set(`l2_${field}`, values.l2[field]);
+          });
+        } else {
+          cfg.fields.forEach((field) => {
+            params.set(field, values[field]);
+          });
+        }
+        const res = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
 
-      resultsStatus.textContent = `Último guardado: ${data.fecha}`;
-      showToast("✅ Resultados guardados y pantalla actualizada", false);
-    } catch (err) {
-      resultsStatus.textContent = "";
-      showToast("⚠️ No se pudieron guardar los resultados. Revisa tu conexión.", true);
-    } finally {
-      setResultsBusy(false);
-    }
+        await fetch(cfg.playUrl, { mode: "no-cors" });
+
+        els.status.textContent = `Último guardado: ${data.fecha}`;
+        showToast("✅ Resultados guardados y pantalla actualizada", false);
+      } catch (err) {
+        els.status.textContent = "";
+        showToast("⚠️ No se pudieron guardar los resultados. Revisa tu conexión.", true);
+      } finally {
+        setResultsBusy(area, false);
+      }
+    });
+
+    els.activateBtn.addEventListener("click", async () => {
+      setResultsBusy(area, true);
+      els.status.textContent = "Activando pantalla…";
+      try {
+        await fetch(cfg.playUrl, { mode: "no-cors" });
+        els.status.textContent = "";
+        showToast("✅ Pantalla de resultados activada", false);
+      } catch (err) {
+        els.status.textContent = "";
+        showToast("⚠️ No se pudo activar la pantalla. Revisa tu conexión.", true);
+      } finally {
+        setResultsBusy(area, false);
+      }
+    });
+
+    els.stopBtn.addEventListener("click", async () => {
+      setResultsBusy(area, true);
+      els.status.textContent = "Deteniendo pantalla…";
+      try {
+        await fetch(cfg.stopUrl, { mode: "no-cors" });
+        els.status.textContent = "";
+        showToast("⏹ Pantalla de resultados detenida", false);
+      } catch (err) {
+        els.status.textContent = "";
+        showToast("⚠️ No se pudo detener la pantalla. Revisa tu conexión.", true);
+      } finally {
+        setResultsBusy(area, false);
+      }
+    });
   });
 
-  activateScreenBtn.addEventListener("click", async () => {
-    setResultsBusy(true);
-    resultsStatus.textContent = "Activando pantalla…";
-    try {
-      await fetch(FILETE_RESULTS_PLAY_URL, { mode: "no-cors" });
-      resultsStatus.textContent = "";
-      showToast("✅ Pantalla de resultados activada", false);
-    } catch (err) {
-      resultsStatus.textContent = "";
-      showToast("⚠️ No se pudo activar la pantalla. Revisa tu conexión.", true);
-    } finally {
-      setResultsBusy(false);
-    }
-  });
+  // ---- Selector de área (dentro de Resultados por Área) ----
+  const areaTabBtns = document.querySelectorAll(".area-tab-btn");
+  const areaCards = document.querySelectorAll(".results-card[data-area]");
+  let currentArea = "filete";
 
-  stopScreenBtn.addEventListener("click", async () => {
-    setResultsBusy(true);
-    resultsStatus.textContent = "Deteniendo pantalla…";
-    try {
-      await fetch(FILETE_RESULTS_STOP_URL, { mode: "no-cors" });
-      resultsStatus.textContent = "";
-      showToast("⏹ Pantalla de resultados detenida", false);
-    } catch (err) {
-      resultsStatus.textContent = "";
-      showToast("⚠️ No se pudo detener la pantalla. Revisa tu conexión.", true);
-    } finally {
-      setResultsBusy(false);
-    }
+  areaTabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentArea = btn.dataset.area;
+      areaTabBtns.forEach((b) => b.classList.toggle("active", b === btn));
+      areaCards.forEach((c) => c.classList.toggle("active", c.dataset.area === currentArea));
+      loadResultados(currentArea);
+    });
   });
 </script>
 
