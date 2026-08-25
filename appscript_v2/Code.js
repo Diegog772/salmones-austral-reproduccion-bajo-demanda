@@ -115,9 +115,10 @@ function readData_(area) {
 }
 
 // ---- Sync Sheet -> Slide (fusionado del script de Pablo, mismo proceso) ----
-// Genérico: cualquier celda con contenido se copia al shape de la Slide
-// tageado R{fila}C{columna} — agregar columnas nuevas no requiere tocar esto,
-// solo hace falta que exista el shape tageado correspondiente en la Slide.
+// Genérico: cada celda (con o sin contenido) se copia al shape de la Slide
+// tageado R{fila}C{columna} — si la celda está vacía, el shape también queda
+// vacío. Agregar columnas nuevas no requiere tocar esto, solo hace falta que
+// exista el shape tageado correspondiente en la Slide.
 function syncSheetToSlide_(sheet, slideIds) {
   if (!slideIds || !slideIds.length) return;
   var lock = LockService.getScriptLock();
@@ -151,15 +152,15 @@ function syncSheetToOneSlide_(data, slideId) {
   for (var r = 0; r < data.length; r++) {
     for (var c = 0; c < data[r].length; c++) {
       var rawValue = data[r][c];
-      if (rawValue === "" || rawValue === null || rawValue === undefined) continue;
       var tag = "R" + (r + 1) + "C" + (c + 1);
       var shapes = shapeByTag[tag];
       if (!shapes) continue; // todavía no existe ese shape en la Slide -- se ignora sin error
-      var formatted = formatValue_(rawValue, now);
+      // Celda vacía -> el shape también se vacía (no se queda con el dato viejo).
+      var formatted = (rawValue === "" || rawValue === null || rawValue === undefined) ? "" : formatValue_(rawValue, now);
       shapes.forEach(function (shape) {
         if (shape.getText().asString() !== formatted) {
           shape.getText().setText(formatted);
-          Logger.log("syncSheetToSlide_: [" + slideId + "] " + tag + " -> " + formatted);
+          Logger.log("syncSheetToSlide_: [" + slideId + "] " + tag + " -> '" + formatted + "'");
         }
       });
     }
