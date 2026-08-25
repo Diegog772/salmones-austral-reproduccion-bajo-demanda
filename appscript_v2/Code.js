@@ -45,6 +45,18 @@ var AREAS = {
     slideIds: [
       "1vTQC-6971ROuSl_qY-EXz_d2ytccsUf0qs_0qVIyeDs" // Turno Porcionado
     ]
+  },
+  lavado: {
+    label: "Lavado",
+    sheetTab: "Lavado",
+    logTab: "Log Lavado",
+    hasLineas: false, // 1 sola fila de datos, sin L1/L2
+    fields: ["piezas", "acumulado", "supervisor"],
+    fieldHeaders: ["Piezas Hr", "Acumulado", "Supervisor"],
+    numericFields: ["piezas", "acumulado"],
+    slideIds: [
+      "1K9mt7U_EF2WacSg-vJA_G1lkzw1MJ08K7CQTR8nlnCU" // Turno Lavado
+    ]
   }
 };
 
@@ -249,11 +261,12 @@ function setupHeaders_(area) {
   logSheet.getRange(1, 1, 1, header.length).setValues([header]);
 }
 
-// Construye un layout básico (título + 2 valores + fecha) en una Slide en
-// blanco para Porcionado, con los shapes ya tageados R2C2/R2C3/R4C2. Solo se
-// usa una vez para arrancar la Slide — el diseño se puede embellecer después
-// en Slides sin tocar el Alt Text de estos shapes.
-function buildPorcionadoSlide_(slideId) {
+// Construye un layout básico (título + N valores en columnas + fecha) en una
+// Slide en blanco, con los shapes ya tageados. Solo se usa una vez para
+// arrancar la Slide — el diseño se puede embellecer después en Slides sin
+// tocar el Alt Text de estos shapes.
+// columns: [{ label: "Kilos Hr", tag: "R2C3" }, ...]
+function buildSimpleAreaSlide_(slideId, title, columns, fechaTag) {
   var presentation = SlidesApp.openById(slideId);
   var slide = presentation.getSlides()[0];
   var pageW = presentation.getPageWidth();
@@ -268,21 +281,20 @@ function buildPorcionadoSlide_(slideId) {
     return box;
   }
 
-  addBox("Porcionado — Resultados", pageW * 0.05, pageH * 0.06, pageW * 0.9, pageH * 0.14, 32, true, null);
+  addBox(title, pageW * 0.05, pageH * 0.06, pageW * 0.9, pageH * 0.14, 32, true, null);
 
-  var colW = pageW * 0.42;
-  var gap = pageW * 0.06;
-  var x1 = pageW * 0.05;
-  var x2 = x1 + colW + gap;
+  var margin = pageW * 0.05;
+  var gap = pageW * 0.04;
+  var colW = (pageW * 0.9 - gap * (columns.length - 1)) / columns.length;
 
-  addBox("Kilos Hr", x1, pageH * 0.28, colW, pageH * 0.08, 18, true, null);
-  addBox("0", x1, pageH * 0.37, colW, pageH * 0.22, 44, true, "R2C3");
-
-  addBox("Kilos Acumulados", x2, pageH * 0.28, colW, pageH * 0.08, 18, true, null);
-  addBox("0", x2, pageH * 0.37, colW, pageH * 0.22, 44, true, "R2C2");
+  columns.forEach(function (col, i) {
+    var x = margin + i * (colW + gap);
+    addBox(col.label, x, pageH * 0.28, colW, pageH * 0.08, 16, true, null);
+    addBox("-", x, pageH * 0.37, colW, pageH * 0.22, 36, true, col.tag);
+  });
 
   addBox("Fecha", pageW * 0.05, pageH * 0.70, pageW * 0.3, pageH * 0.08, 14, true, null);
-  addBox("--/--/----", pageW * 0.05, pageH * 0.78, pageW * 0.3, pageH * 0.10, 16, false, "R4C2");
+  addBox("--/--/----", pageW * 0.05, pageH * 0.78, pageW * 0.3, pageH * 0.10, 16, false, fechaTag);
 }
 
 function jsonOutput_(obj) {

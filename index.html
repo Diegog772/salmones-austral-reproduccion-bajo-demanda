@@ -564,6 +564,7 @@
     <div class="area-tabs">
       <button class="area-tab-btn active" type="button" data-area="filete">🐟 Filete</button>
       <button class="area-tab-btn" type="button" data-area="porcionado">🔪 Porcionado</button>
+      <button class="area-tab-btn" type="button" data-area="lavado">🚿 Lavado</button>
     </div>
 
     <div class="results-card active" data-area="filete">
@@ -667,6 +668,33 @@
         <button id="porcionado-stop-screen-btn" class="btn-stop-screen" type="button">⏹ Detener pantalla</button>
       </div>
       <p id="porcionado-results-status" class="results-status"></p>
+    </div>
+
+    <div class="results-card" data-area="lavado">
+      <span class="icon">🚿</span>
+      <span class="area-name">Lavado — Resultados</span>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="lavado-piezas">Piezas Hr</label>
+          <input id="lavado-piezas" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="lavado-acumulado">Acumulado</label>
+          <input id="lavado-acumulado" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field field-wide">
+          <label for="lavado-supervisor">Supervisor</label>
+          <input id="lavado-supervisor" type="text" placeholder="Supervisor">
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button id="lavado-save-results-btn" class="btn-save-results" type="button">💾 Guardar resultados</button>
+        <button id="lavado-activate-screen-btn" class="btn-activate-screen" type="button">▶️ Activar pantalla</button>
+        <button id="lavado-stop-screen-btn" class="btn-stop-screen" type="button">⏹ Detener pantalla</button>
+      </div>
+      <p id="lavado-results-status" class="results-status"></p>
     </div>
   </div>
 
@@ -866,7 +894,15 @@
       requiredField: "kilos",
       requiredLabel: "Kilos Acumulados",
       playUrl: "https://app.onsign.tv/play/8kgxOPqSfxIylS9Joa9eCrUH",
-      stopUrl: "https://app.onsign.tv/stop/FC73j0Hut9L8QDZCsTVVJ1hx"
+      stopUrl: "https://app.onsign.tv/stop/SJvUkQ4DIp4VdW2Y8swPmMu5"
+    },
+    lavado: {
+      hasLineas: false,
+      fields: ["piezas", "acumulado", "supervisor"],
+      requiredField: "piezas",
+      requiredLabel: "Piezas Hr",
+      playUrl: "https://app.onsign.tv/play/dojyBKDidJDIcJaVtmKtYuUJ",
+      stopUrl: "https://app.onsign.tv/stop/vuzRXigGo0TC9NSWLI1OZAPi"
     }
   };
 
