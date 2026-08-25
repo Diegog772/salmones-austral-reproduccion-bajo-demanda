@@ -27,11 +27,13 @@ var AREAS = {
     fields: ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"],
     fieldHeaders: ["Piezas", "Rango HR", "Trim", "Calibre", "Cliente", "Acumulado", "Supervisor"],
     numericFields: ["piezas", "acumulado"],
-    // Transición: se sincroniza a las dos Slides (la vieja y la nueva que la
-    // va a reemplazar). Cuando Pablo confirme, sacar el ID viejo de esta lista.
+    // Transición: se sincroniza a las tres Slides (la vieja, la nueva que la
+    // va a reemplazar, y Empaque que solo muestra un subset de los datos de
+    // Filete). Cuando Pablo confirme el corte de Filete2, sacar el ID viejo.
     slideIds: [
       "1SUnpb0vz5XmA5QDpOX2D5dU3UdPKa9CoE9KqP1ez8wo", // Turno Filete (actual, en uso por OnSign)
-      "1RtT-RlhLnr26Y8HPAGPkY5QmjRQDw_yaLbe0xVcD06I"  // Turno Filete2 (reemplazo futuro)
+      "1RtT-RlhLnr26Y8HPAGPkY5QmjRQDw_yaLbe0xVcD06I", // Turno Filete2 (reemplazo futuro)
+      "16km6hEAitpp2h8-OIvmahmeuWng1e8NNy242TSlfVCs"  // Turno Empaque (espeja Piezas Hr/Rango HR/Trim/Calibre/Cliente)
     ]
   },
   porcionado: {
@@ -295,6 +297,54 @@ function buildSimpleAreaSlide_(slideId, title, columns, fechaTag) {
 
   addBox("Fecha", pageW * 0.05, pageH * 0.70, pageW * 0.3, pageH * 0.08, 14, true, null);
   addBox("--/--/----", pageW * 0.05, pageH * 0.78, pageW * 0.3, pageH * 0.10, 16, false, fechaTag);
+}
+
+// Igual que buildSimpleAreaSlide_ pero con 2 filas (L1/L2) por columna —
+// para Slides que reflejan datos de un área "hasLineas" (ej. Empaque
+// mostrando los mismos datos que Filete). columns: [{ label, col }] donde
+// "col" es el número de columna del Sheet (B=2, C=3, ...).
+function buildLineasTableSlide_(slideId, title, columns, fechaTag) {
+  var presentation = SlidesApp.openById(slideId);
+  var slide = presentation.getSlides()[0];
+  var pageW = presentation.getPageWidth();
+  var pageH = presentation.getPageHeight();
+
+  function addBox(text, x, y, w, h, fontSize, bold, tag) {
+    var box = slide.insertTextBox(text, x, y, w, h);
+    var textRange = box.getText();
+    textRange.getTextStyle().setFontSize(fontSize).setBold(!!bold);
+    textRange.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+    if (tag) box.setTitle(tag);
+    return box;
+  }
+
+  addBox(title, pageW * 0.03, pageH * 0.05, pageW * 0.94, pageH * 0.10, 26, true, null);
+
+  var startX = pageW * 0.03;
+  var labelColW = pageW * 0.08;
+  var tableW = pageW * 0.94 - labelColW;
+  var colW = tableW / columns.length;
+
+  var headerY = pageH * 0.20;
+  var headerH = pageH * 0.07;
+  var row1Y = pageH * 0.30;
+  var row2Y = pageH * 0.48;
+  var rowH = pageH * 0.15;
+
+  columns.forEach(function (f, i) {
+    var x = startX + labelColW + i * colW;
+    addBox(f.label, x, headerY, colW, headerH, 13, true, null);
+    addBox("-", x, row1Y, colW, rowH, 22, true, "R2C" + f.col);
+    addBox("-", x, row2Y, colW, rowH, 22, true, "R3C" + f.col);
+  });
+
+  addBox("L1", startX, row1Y, labelColW, rowH, 18, true, null);
+  addBox("L2", startX, row2Y, labelColW, rowH, 18, true, null);
+
+  if (fechaTag) {
+    addBox("Fecha", startX, pageH * 0.70, pageW * 0.25, pageH * 0.07, 13, true, null);
+    addBox("--/--/----", startX, pageH * 0.77, pageW * 0.25, pageH * 0.09, 14, false, fechaTag);
+  }
 }
 
 function jsonOutput_(obj) {
