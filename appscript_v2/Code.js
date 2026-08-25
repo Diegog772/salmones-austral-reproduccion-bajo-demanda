@@ -42,7 +42,9 @@ var AREAS = {
     fields: ["kilos", "kilosHr"],
     fieldHeaders: ["Kilos", "Kilos Hr"],
     numericFields: ["kilos", "kilosHr"],
-    slideIds: [] // todavía sin Slide conectada
+    slideIds: [
+      "1vTQC-6971ROuSl_qY-EXz_d2ytccsUf0qs_0qVIyeDs" // Turno Porcionado
+    ]
   }
 };
 
