@@ -249,6 +249,42 @@ function setupHeaders_(area) {
   logSheet.getRange(1, 1, 1, header.length).setValues([header]);
 }
 
+// Construye un layout básico (título + 2 valores + fecha) en una Slide en
+// blanco para Porcionado, con los shapes ya tageados R2C2/R2C3/R4C2. Solo se
+// usa una vez para arrancar la Slide — el diseño se puede embellecer después
+// en Slides sin tocar el Alt Text de estos shapes.
+function buildPorcionadoSlide_(slideId) {
+  var presentation = SlidesApp.openById(slideId);
+  var slide = presentation.getSlides()[0];
+  var pageW = presentation.getPageWidth();
+  var pageH = presentation.getPageHeight();
+
+  function addBox(text, x, y, w, h, fontSize, bold, tag) {
+    var box = slide.insertTextBox(text, x, y, w, h);
+    var textRange = box.getText();
+    textRange.getTextStyle().setFontSize(fontSize).setBold(!!bold);
+    textRange.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+    if (tag) box.setTitle(tag);
+    return box;
+  }
+
+  addBox("Porcionado — Resultados", pageW * 0.05, pageH * 0.06, pageW * 0.9, pageH * 0.14, 32, true, null);
+
+  var colW = pageW * 0.42;
+  var gap = pageW * 0.06;
+  var x1 = pageW * 0.05;
+  var x2 = x1 + colW + gap;
+
+  addBox("Kilos Hr", x1, pageH * 0.28, colW, pageH * 0.08, 18, true, null);
+  addBox("0", x1, pageH * 0.37, colW, pageH * 0.22, 44, true, "R2C3");
+
+  addBox("Kilos Acumulados", x2, pageH * 0.28, colW, pageH * 0.08, 18, true, null);
+  addBox("0", x2, pageH * 0.37, colW, pageH * 0.22, 44, true, "R2C2");
+
+  addBox("Fecha", pageW * 0.05, pageH * 0.70, pageW * 0.3, pageH * 0.08, 14, true, null);
+  addBox("--/--/----", pageW * 0.05, pageH * 0.78, pageW * 0.3, pageH * 0.10, 16, false, "R4C2");
+}
+
 function jsonOutput_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
