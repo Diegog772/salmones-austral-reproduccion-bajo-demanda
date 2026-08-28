@@ -27,9 +27,14 @@ var SHEET_ID = "1hkzQJJnTtBi_3k9LhlieLu8msHnoorS3Ikf5RsI8vgo";
 // "historial semanal", una fila por supervisor por semana, sin pestaña de
 // Log aparte — la pestaña entera ES el historial).
 var SUMMARY_AREAS = {
-  filete: { label: "Filete", sheetTab: "Resumen Filete" },
-  lavado: { label: "Lavado", sheetTab: "Resumen Lavado" }
+  filete: {
+    label: "Filete",
+    sheetTab: "Resumen Filete",
+    slideIds: ["1n_JlFoFQHglssKnIi9reiQtnXBqP0L_0iunzCz2C_xo"]
+  },
+  lavado: { label: "Lavado", sheetTab: "Resumen Lavado", slideIds: [] }
 };
+var SUMMARY_MAX_SLIDE_ROWS = 6; // cantidad de filas de supervisor que soporta la Slide
 var SUMMARY_HEADERS = ["Semana", "Supervisor", "Día 1", "Día 2", "Día 3", "Día 4", "Día 5", "Día 6", "Promedio", "Total"];
 
 var AREAS = {
@@ -483,11 +488,121 @@ function writeSummary_(summaryArea, week, incomingRows) {
     sheet.getRange(2, 1, finalRows.length, SUMMARY_HEADERS.length).setValues(finalRows);
   }
 
-  return {
-    rows: newRows.map(function (row) {
-      return { supervisor: row[1], dias: row.slice(2, 8), promedio: row[8], total: row[9] };
-    })
-  };
+  var resultRows = newRows.map(function (row) {
+    return { supervisor: row[1], dias: row.slice(2, 8), promedio: row[8], total: row[9] };
+  });
+
+  syncSummaryToSlide_(summaryArea, week, resultRows);
+
+  return { rows: resultRows };
+}
+
+// ---- Sync Resumen -> Slide ----
+// A diferencia de syncSheetToSlide_ (que refleja el Sheet completo), acá se
+// arma una "grilla virtual" con las filas que se acaban de guardar para esa
+// semana — la pestaña Resumen tiene el historial de TODAS las semanas
+// apiladas, así que no tiene sentido sincronizar por posición real de fila.
+// R1C1 = título (semana). Fila de supervisor N -> R{N+2}C{1..9}
+// (1=Supervisor, 2-7=Día 1-6, 8=Promedio, 9=Total).
+function syncSummaryToSlide_(summaryArea, week, rows) {
+  if (!summaryArea.slideIds || !summaryArea.slideIds.length) return;
+
+  var grid = {};
+  grid["R1C1"] = formatWeekLabel_(week);
+  for (var i = 0; i < SUMMARY_MAX_SLIDE_ROWS; i++) {
+    var r = i + 2;
+    var row = rows[i];
+    grid["R" + r + "C1"] = row ? row.supervisor : "";
+    for (var d = 0; d < 6; d++) {
+      grid["R" + r + "C" + (d + 2)] = row ? row.dias[d] : "";
+    }
+    grid["R" + r + "C8"] = row ? row.promedio : "";
+    grid["R" + r + "C9"] = row ? row.total : "";
+  }
+
+  summaryArea.slideIds.forEach(function (slideId) {
+    syncGridToSlide_(grid, slideId);
+  });
+}
+
+function formatWeekLabel_(week) {
+  var parts = String(week).split("-W");
+  return parts.length === 2 ? "SEMANA " + Number(parts[1]) : String(week);
+}
+
+function syncGridToSlide_(grid, slideId) {
+  var slide = SlidesApp.openById(slideId).getSlides()[0];
+  var shapeByTag = {};
+  slide.getShapes().forEach(function (shape) {
+    var tag = (shape.getTitle() || "").trim();
+    if (!tag) return;
+    if (!shapeByTag[tag]) shapeByTag[tag] = [];
+    shapeByTag[tag].push(shape);
+  });
+
+  Object.keys(grid).forEach(function (tag) {
+    var shapes = shapeByTag[tag];
+    if (!shapes) return;
+    var raw = grid[tag];
+    var formatted = raw === undefined || raw === null ? "" : String(raw);
+    shapes.forEach(function (shape) {
+      if (shape.getText().asString() !== formatted) {
+        shape.getText().setText(formatted);
+      }
+    });
+  });
+}
+
+// Construye el layout de la Slide de Resumen semanal (título + hasta
+// SUMMARY_MAX_SLIDE_ROWS filas de supervisor x 9 columnas), ya tageado.
+// Solo se usa una vez para arrancar una Slide en blanco.
+function buildSummarySlide_(slideId) {
+  var presentation = SlidesApp.openById(slideId);
+  var slide = presentation.getSlides()[0];
+  var pageW = presentation.getPageWidth();
+  var pageH = presentation.getPageHeight();
+
+  function addBox(text, x, y, w, h, fontSize, bold, tag) {
+    var box = slide.insertTextBox(text, x, y, w, h);
+    var tr = box.getText();
+    tr.getTextStyle().setFontSize(fontSize).setBold(!!bold);
+    tr.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+    if (tag) box.setTitle(tag);
+    return box;
+  }
+
+  addBox("RESUMEN SEMANA", pageW * 0.05, pageH * 0.04, pageW * 0.9, pageH * 0.10, 24, true, "R1C1");
+
+  var headers = ["Supervisor", "Día 1", "Día 2", "Día 3", "Día 4", "Día 5", "Día 6", "Promedio", "Total"];
+  var startX = pageW * 0.03;
+  var tableW = pageW * 0.94;
+  var supColW = tableW * 0.18;
+  var colW = (tableW - supColW) / 8;
+  var colWidths = [supColW, colW, colW, colW, colW, colW, colW, colW, colW];
+
+  var headerY = pageH * 0.16;
+  var headerH = pageH * 0.06;
+  var rowH = (pageH * 0.92 - headerY - headerH) / SUMMARY_MAX_SLIDE_ROWS;
+
+  var x = startX;
+  headers.forEach(function (h, i) {
+    addBox(h, x, headerY, colWidths[i], headerH, 12, true, null);
+    x += colWidths[i];
+  });
+
+  for (var r = 0; r < SUMMARY_MAX_SLIDE_ROWS; r++) {
+    var y = headerY + headerH + r * rowH;
+    x = startX;
+    addBox("-", x, y, supColW, rowH, 13, true, "R" + (r + 2) + "C1");
+    x += supColW;
+    for (var c = 0; c < 6; c++) {
+      addBox("-", x, y, colW, rowH, 13, false, "R" + (r + 2) + "C" + (c + 2));
+      x += colW;
+    }
+    addBox("-", x, y, colW, rowH, 13, true, "R" + (r + 2) + "C8");
+    x += colW;
+    addBox("-", x, y, colW, rowH, 13, true, "R" + (r + 2) + "C9");
+  }
 }
 
 function jsonOutput_(obj) {
