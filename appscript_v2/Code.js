@@ -502,13 +502,18 @@ function writeSummary_(summaryArea, week, incomingRows) {
 // arma una "grilla virtual" con las filas que se acaban de guardar para esa
 // semana — la pestaña Resumen tiene el historial de TODAS las semanas
 // apiladas, así que no tiene sentido sincronizar por posición real de fila.
-// R1C1 = título (semana). Fila de supervisor N -> R{N+2}C{1..9}
-// (1=Supervisor, 2-7=Día 1-6, 8=Promedio, 9=Total).
+// R1C1 = título (semana). R1C2..R1C7 = fecha real de cada columna de día
+// (encabezados). Fila de supervisor N -> R{N+2}C{1..9} (1=Supervisor,
+// 2-7=Día 1-6, 8=Promedio, 9=Total).
 function syncSummaryToSlide_(summaryArea, week, rows) {
   if (!summaryArea.slideIds || !summaryArea.slideIds.length) return;
 
   var grid = {};
   grid["R1C1"] = formatWeekLabel_(week);
+  var dayLabels = summaryWeekDayLabels_(week);
+  for (var d0 = 0; d0 < 6; d0++) {
+    grid["R1C" + (d0 + 2)] = dayLabels[d0];
+  }
   for (var i = 0; i < SUMMARY_MAX_SLIDE_ROWS; i++) {
     var r = i + 2;
     var row = rows[i];
@@ -528,6 +533,33 @@ function syncSummaryToSlide_(summaryArea, week, rows) {
 function formatWeekLabel_(week) {
   var parts = String(week).split("-W");
   return parts.length === 2 ? "SEMANA " + Number(parts[1]) : String(week);
+}
+
+var MESES_ES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+// Mismo cálculo ISO-8601 semana->lunes que usa index.html (isoWeekToMonday),
+// para que los encabezados de día de la Slide muestren la fecha real.
+function isoWeekToMonday_(weekValue) {
+  var parts = String(weekValue).split("-W");
+  var year = Number(parts[0]);
+  var week = Number(parts[1]);
+  var jan4 = new Date(Date.UTC(year, 0, 4));
+  var jan4Day = jan4.getUTCDay() || 7;
+  var monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (week - 1) * 7);
+  return monday;
+}
+
+function summaryWeekDayLabels_(week) {
+  if (!/^\d{4}-W\d{1,2}$/.test(String(week))) return ["", "", "", "", "", ""];
+  var monday = isoWeekToMonday_(week);
+  var labels = [];
+  for (var i = 0; i < 6; i++) {
+    var d = new Date(monday);
+    d.setUTCDate(monday.getUTCDate() + i);
+    labels.push(("0" + d.getUTCDate()).slice(-2) + "-" + MESES_ES_CORTOS[d.getUTCMonth()]);
+  }
+  return labels;
 }
 
 function syncGridToSlide_(grid, slideId) {
@@ -586,7 +618,9 @@ function buildSummarySlide_(slideId) {
 
   var x = startX;
   headers.forEach(function (h, i) {
-    addBox(h, x, headerY, colWidths[i], headerH, 12, true, null);
+    // i=1..6 son las 6 columnas de día -> se sincronizan con la fecha real.
+    var tag = i >= 1 && i <= 6 ? "R1C" + (i + 1) : null;
+    addBox(h, x, headerY, colWidths[i], headerH, 12, true, tag);
     x += colWidths[i];
   });
 
