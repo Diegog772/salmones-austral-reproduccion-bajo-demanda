@@ -576,7 +576,7 @@ function syncGridToSlide_(grid, slideId) {
     var shapes = shapeByTag[tag];
     if (!shapes) return;
     var raw = grid[tag];
-    var formatted = raw === undefined || raw === null ? "" : String(raw);
+    var formatted = raw === undefined || raw === null ? "" : (typeof raw === "number" ? raw.toLocaleString("es-CL") : String(raw));
     shapes.forEach(function (shape) {
       if (shape.getText().asString() !== formatted) {
         shape.getText().setText(formatted);
