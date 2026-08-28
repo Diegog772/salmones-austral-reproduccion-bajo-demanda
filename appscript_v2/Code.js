@@ -364,6 +364,39 @@ function buildLineasTableSlide_(slideId, title, columns, fechaTag) {
   }
 }
 
+// Agrega un shape "Hora" (label + valor tageado) al lado del shape de Fecha
+// ya existente (tageado fechaTag) en una Slide. Usa la posición del shape de
+// Fecha como referencia, así no hace falta conocer el layout de cada Slide.
+function addHoraNextToFecha_(slideId, fechaTag, horaTag) {
+  var presentation = SlidesApp.openById(slideId);
+  var slide = presentation.getSlides()[0];
+  var fechaValueShape = null;
+  slide.getShapes().forEach(function (s) {
+    if ((s.getTitle() || "").trim() === fechaTag) fechaValueShape = s;
+  });
+  if (!fechaValueShape) throw new Error("No se encontró shape con tag " + fechaTag);
+
+  var gap = presentation.getPageWidth() * 0.02;
+  var vw = fechaValueShape.getWidth();
+  var vh = fechaValueShape.getHeight();
+  var vx = Math.max(0, fechaValueShape.getLeft() - gap - vw);
+  var vy = fechaValueShape.getTop();
+  var labelH = vh * 0.5;
+  var labelY = Math.max(0, vy - labelH - presentation.getPageHeight() * 0.01);
+
+  function addBox(text, x, y, w, h, fontSize, bold, tag) {
+    var box = slide.insertTextBox(text, x, y, w, h);
+    var tr = box.getText();
+    tr.getTextStyle().setFontSize(fontSize).setBold(!!bold);
+    tr.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+    if (tag) box.setTitle(tag);
+    return box;
+  }
+
+  addBox("Hora", vx, labelY, vw, labelH, 13, true, null);
+  addBox("--:--:--", vx, vy, vw, vh, 14, false, horaTag);
+}
+
 function jsonOutput_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
