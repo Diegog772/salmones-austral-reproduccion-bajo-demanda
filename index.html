@@ -1095,6 +1095,7 @@
     filete: {
       hasLineas: true,
       fields: ["piezas", "rangoHr", "trim", "calibre", "cliente", "acumulado", "supervisor"],
+      numericFields: ["piezas", "acumulado"],
       requiredField: "piezas",
       requiredLabel: "Piezas Hr",
       playUrl: "https://app.onsign.tv/play/9zfu4MKXYxnjGVmnZmqjnvif",
@@ -1103,6 +1104,7 @@
     porcionado: {
       hasLineas: false,
       fields: ["kilos", "kilosHr"],
+      numericFields: ["kilos", "kilosHr"],
       requiredField: "kilos",
       requiredLabel: "Kilos Acumulados",
       playUrl: "https://app.onsign.tv/play/lfLzwa4KkcUZBBolB1CB0agq",
@@ -1111,12 +1113,40 @@
     lavado: {
       hasLineas: false,
       fields: ["piezas", "acumulado", "supervisor"],
+      numericFields: ["piezas", "acumulado"],
       requiredField: "piezas",
       requiredLabel: "Piezas Hr",
       playUrl: "https://app.onsign.tv/play/YdpEy5gwvf2FNAfwwwPeLl2K",
       stopUrl: "https://app.onsign.tv/stop/L8xLbjsY6n6TYD62CNyc9x7L"
     }
   };
+
+  // ---- Formato de miles (ej. "20.243") para inputs numéricos ----
+  // Los inputs numéricos pasan a type="text" (un <input type="number"> no
+  // puede mostrar puntos de separador) y se formatean solos mientras se
+  // escribe. El valor "real" (sin puntos) se recupera con parseMiles().
+  function formatMiles(digitsOrValue) {
+    const digits = String(digitsOrValue == null ? "" : digitsOrValue).replace(/\D/g, "");
+    if (!digits) return "";
+    return Number(digits).toLocaleString("es-CL");
+  }
+
+  function parseMiles(value) {
+    return String(value == null ? "" : value).replace(/\D/g, "");
+  }
+
+  function attachMilesFormatting(input) {
+    if (!input) return;
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.style.textAlign = "center";
+    input.addEventListener("input", () => {
+      const cursorFromEnd = input.value.length - (input.selectionStart ?? input.value.length);
+      input.value = formatMiles(input.value);
+      const pos = Math.max(0, input.value.length - cursorFromEnd);
+      input.setSelectionRange(pos, pos);
+    });
+  }
 
   const resultInputs = {};
   const areaEls = {};
@@ -1126,13 +1156,17 @@
       resultInputs[area] = { l1: {}, l2: {} };
       ["l1", "l2"].forEach((linea) => {
         cfg.fields.forEach((field) => {
-          resultInputs[area][linea][field] = document.getElementById(`${area}-${linea}-${field}`);
+          const el = document.getElementById(`${area}-${linea}-${field}`);
+          resultInputs[area][linea][field] = el;
+          if (cfg.numericFields.includes(field)) attachMilesFormatting(el);
         });
       });
     } else {
       resultInputs[area] = {};
       cfg.fields.forEach((field) => {
-        resultInputs[area][field] = document.getElementById(`${area}-${field}`);
+        const el = document.getElementById(`${area}-${field}`);
+        resultInputs[area][field] = el;
+        if (cfg.numericFields.includes(field)) attachMilesFormatting(el);
       });
     }
     areaEls[area] = {
@@ -1153,41 +1187,39 @@
   function setAreaValues(area, data) {
     if (!data) return;
     const cfg = AREA_CONFIGS[area];
+    const setOne = (el, field, val) => {
+      if (!el || val === undefined || val === null) return;
+      el.value = cfg.numericFields.includes(field) ? formatMiles(val) : val;
+    };
     if (cfg.hasLineas) {
       ["l1", "l2"].forEach((linea) => {
         const lineaData = data[linea];
         if (!lineaData) return;
-        cfg.fields.forEach((field) => {
-          const el = resultInputs[area][linea][field];
-          const val = lineaData[field];
-          if (el && val !== undefined && val !== null) el.value = val;
-        });
+        cfg.fields.forEach((field) => setOne(resultInputs[area][linea][field], field, lineaData[field]));
       });
       return;
     }
-    cfg.fields.forEach((field) => {
-      const el = resultInputs[area][field];
-      const val = data[field];
-      if (el && val !== undefined && val !== null) el.value = val;
-    });
+    cfg.fields.forEach((field) => setOne(resultInputs[area][field], field, data[field]));
   }
 
   function getAreaValues(area) {
     const cfg = AREA_CONFIGS[area];
+    const readOne = (el, field) => {
+      if (!el) return "";
+      return cfg.numericFields.includes(field) ? parseMiles(el.value) : el.value.trim();
+    };
     if (cfg.hasLineas) {
       const out = { l1: {}, l2: {} };
       ["l1", "l2"].forEach((linea) => {
         cfg.fields.forEach((field) => {
-          const el = resultInputs[area][linea][field];
-          out[linea][field] = el ? el.value.trim() : "";
+          out[linea][field] = readOne(resultInputs[area][linea][field], field);
         });
       });
       return out;
     }
     const out = {};
     cfg.fields.forEach((field) => {
-      const el = resultInputs[area][field];
-      out[field] = el ? el.value.trim() : "";
+      out[field] = readOne(resultInputs[area][field], field);
     });
     return out;
   }
@@ -1363,8 +1395,8 @@
   }
 
   function updateRowStats(tr) {
-    const dayInputs = Array.from(tr.querySelectorAll("input[type='number']"));
-    const values = dayInputs.map((inp) => Number(inp.value) || 0);
+    const dayInputs = Array.from(tr.querySelectorAll(".summary-day-input"));
+    const values = dayInputs.map((inp) => Number(parseMiles(inp.value)) || 0);
     const total = values.reduce((a, b) => a + b, 0);
     const nonZeroCount = values.filter((v) => v !== 0).length;
     const promedio = nonZeroCount ? Math.round(total / nonZeroCount) : 0;
@@ -1387,11 +1419,9 @@
     for (let i = 0; i < 6; i++) {
       const td = document.createElement("td");
       const input = document.createElement("input");
-      input.type = "number";
-      input.min = "0";
-      input.step = "1";
-      input.inputMode = "numeric";
-      input.value = diaValues && diaValues[i] !== undefined && diaValues[i] !== "" ? diaValues[i] : "";
+      input.className = "summary-day-input";
+      input.value = diaValues && diaValues[i] !== undefined && diaValues[i] !== "" ? formatMiles(diaValues[i]) : "";
+      attachMilesFormatting(input);
       input.addEventListener("input", () => updateRowStats(tr));
       td.appendChild(input);
       tr.appendChild(td);
@@ -1472,7 +1502,7 @@
     const rows = Array.from(summaryTableBody.querySelectorAll("tr"))
       .map((tr) => ({
         supervisor: tr.querySelector(".summary-supervisor-input").value.trim(),
-        dias: Array.from(tr.querySelectorAll("input[type='number']")).map((inp) => inp.value.trim())
+        dias: Array.from(tr.querySelectorAll(".summary-day-input")).map((inp) => parseMiles(inp.value))
       }))
       .filter((r) => r.supervisor !== "");
 
