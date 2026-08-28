@@ -89,7 +89,7 @@
     font-size: 0.95rem;
   }
 
-  #password-input {
+  #password-input, #control-password-input {
     width: 100%;
     padding: 16px 18px;
     font-size: 1.1rem;
@@ -103,11 +103,11 @@
     letter-spacing: 0.15em;
   }
 
-  #password-input:focus {
+  #password-input:focus, #control-password-input:focus {
     border-color: var(--accent-light);
   }
 
-  #login-btn {
+  #login-btn, #control-login-btn {
     width: 100%;
     margin-top: 14px;
     padding: 16px;
@@ -122,20 +122,33 @@
     transition: background 0.15s ease, transform 0.1s ease;
   }
 
-  #login-btn:active { transform: scale(0.98); }
-  #login-btn:hover { background: var(--accent-light); }
-  #login-btn:disabled {
+  #login-btn:active, #control-login-btn:active { transform: scale(0.98); }
+  #login-btn:hover, #control-login-btn:hover { background: var(--accent-light); }
+  #login-btn:disabled, #control-login-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  #login-error {
+  #login-error, #control-login-error {
     min-height: 22px;
     margin-top: 12px;
     color: var(--danger);
     font-size: 0.9rem;
     text-align: center;
   }
+
+  .link-btn {
+    margin-top: 18px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    opacity: 0.6;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .link-btn:hover { opacity: 1; }
 
   /* ---- Buttons screen ---- */
   #app-screen {
@@ -145,6 +158,110 @@
     flex-direction: column;
     align-items: center;
   }
+
+  /* ---- Equipo Control Producción ---- */
+  #control-screen {
+    display: none;
+    width: 100%;
+    max-width: 720px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .summary-card {
+    width: 100%;
+    padding: 24px 20px;
+    background: linear-gradient(160deg, var(--bg-elevated), #1c1f22);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  .summary-week-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 20px;
+  }
+
+  .summary-week-row label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+
+  .summary-week-row input {
+    flex: 1;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    border: 2px solid var(--bg);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .summary-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .summary-table th, .summary-table td {
+    padding: 6px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .summary-table th {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .summary-table input {
+    width: 100%;
+    min-width: 64px;
+    padding: 8px 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid var(--bg);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .summary-table input.summary-supervisor-input {
+    min-width: 130px;
+    text-align: left;
+  }
+
+  .summary-computed {
+    color: var(--accent-light);
+    font-weight: 700;
+  }
+
+  .summary-remove-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .summary-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .summary-actions .btn-activate-screen, .summary-actions .btn-save-results { flex: 1; }
 
   /* ---- Tabs ---- */
   .tabs {
@@ -504,10 +621,20 @@
 
 <!-- Login -->
 <section id="login-screen">
-  <p class="subtitle">Ingresa la clave para activar campañas</p>
-  <input id="password-input" type="password" inputmode="text" autocomplete="off" placeholder="Clave de acceso">
-  <button id="login-btn" type="button">Ingresar</button>
-  <p id="login-error"></p>
+  <div id="login-mode-main">
+    <p class="subtitle">Ingresa la clave para activar campañas</p>
+    <input id="password-input" type="password" inputmode="text" autocomplete="off" placeholder="Clave de acceso">
+    <button id="login-btn" type="button">Ingresar</button>
+    <p id="login-error"></p>
+    <button id="show-control-login-btn" type="button" class="link-btn">Acceso equipo control</button>
+  </div>
+  <div id="login-mode-control" style="display:none">
+    <p class="subtitle">Equipo Control Producción</p>
+    <input id="control-password-input" type="password" inputmode="text" autocomplete="off" placeholder="Clave de acceso">
+    <button id="control-login-btn" type="button">Ingresar</button>
+    <p id="control-login-error"></p>
+    <button id="back-to-main-login-btn" type="button" class="link-btn">← Volver</button>
+  </div>
 </section>
 
 <!-- Buttons -->
@@ -701,6 +828,39 @@
   <button id="logout-btn" type="button">Cerrar sesión</button>
 </section>
 
+<!-- Equipo Control Producción -->
+<section id="control-screen">
+  <div class="area-tabs">
+    <button class="area-tab-btn active" type="button" data-summary-area="filete">🐟 Filete</button>
+    <button class="area-tab-btn" type="button" data-summary-area="lavado">🚿 Lavado</button>
+  </div>
+
+  <div class="summary-card">
+    <h1>Resultados por Día/Área</h1>
+    <div class="summary-week-row">
+      <label for="summary-week-input">Semana</label>
+      <input id="summary-week-input" type="week">
+    </div>
+
+    <div class="summary-table-wrap">
+      <table class="summary-table">
+        <thead>
+          <tr id="summary-table-head"></tr>
+        </thead>
+        <tbody id="summary-table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="summary-actions">
+      <button id="summary-add-row-btn" class="btn-activate-screen" type="button">+ Agregar supervisor</button>
+      <button id="summary-save-btn" class="btn-save-results" type="button">💾 Guardar semana</button>
+    </div>
+    <p id="summary-status" class="results-status"></p>
+  </div>
+
+  <button id="control-logout-btn" type="button">Cerrar sesión</button>
+</section>
+
 <div id="toast"></div>
 
 <script>
@@ -708,6 +868,13 @@
   // Para cambiarla: calcula el SHA-256 de la nueva clave y reemplaza este valor.
   const PASSWORD_HASH = "6427f09d7533a45f33ce4197636ecfe5f401ca36a62b039ca595038ac5a2d364";
   const SESSION_KEY = "sa_onsign_unlocked";
+
+  // Clave separada para "Equipo Control Producción" (Resultados por Día/Área).
+  // Clave actual: "control2026". Mismo mecanismo que la de arriba para cambiarla.
+  const CONTROL_PASSWORD_HASH = "52169d41da4ff5357a84b28edc07cf75c08dcb59cb1fc260e453031f8a0895fe";
+  const CONTROL_SESSION_KEY = "sa_control_unlocked";
+  const CONTROL_WRITE_KEY = "sa-control-2026";
+
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_SECONDS = 30;
 
@@ -718,18 +885,38 @@
 
   const loginScreen = document.getElementById("login-screen");
   const appScreen = document.getElementById("app-screen");
+  const controlScreen = document.getElementById("control-screen");
+  const loginModeMain = document.getElementById("login-mode-main");
+  const loginModeControl = document.getElementById("login-mode-control");
   const passwordInput = document.getElementById("password-input");
   const loginBtn = document.getElementById("login-btn");
   const loginError = document.getElementById("login-error");
   const logoutBtn = document.getElementById("logout-btn");
+  const controlPasswordInput = document.getElementById("control-password-input");
+  const controlLoginBtn = document.getElementById("control-login-btn");
+  const controlLoginError = document.getElementById("control-login-error");
+  const controlLogoutBtn = document.getElementById("control-logout-btn");
+  const showControlLoginBtn = document.getElementById("show-control-login-btn");
+  const backToMainLoginBtn = document.getElementById("back-to-main-login-btn");
   const toast = document.getElementById("toast");
-
-  let failedAttempts = 0;
-  let lockedUntil = 0;
 
   async function sha256Hex(text) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function showMainLoginMode() {
+    loginModeControl.style.display = "none";
+    loginModeMain.style.display = "block";
+    passwordInput.value = "";
+  }
+
+  function showLogin() {
+    appScreen.style.display = "none";
+    controlScreen.style.display = "none";
+    loginScreen.style.display = "flex";
+    showMainLoginMode();
+    passwordInput.focus();
   }
 
   function showApp() {
@@ -737,66 +924,90 @@
     appScreen.style.display = "flex";
   }
 
-  function showLogin() {
-    appScreen.style.display = "none";
-    loginScreen.style.display = "flex";
-    passwordInput.value = "";
-    passwordInput.focus();
+  function showControlApp() {
+    loginScreen.style.display = "none";
+    controlScreen.style.display = "flex";
+    if (!summaryWeekInput.value) summaryWeekInput.value = getCurrentIsoWeekValue();
+    loadSummary();
   }
 
-  function startLockoutCountdown(seconds) {
-    passwordInput.disabled = true;
-    loginBtn.disabled = true;
-    const tick = () => {
-      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
-      if (remaining <= 0) {
-        passwordInput.disabled = false;
-        loginBtn.disabled = false;
-        loginError.textContent = "";
-        failedAttempts = 0;
-        return;
-      }
-      loginError.textContent = `Demasiados intentos. Espera ${remaining}s.`;
-      setTimeout(tick, 500);
-    };
-    tick();
-  }
+  // Fábrica de "gate" de clave: evita duplicar la lógica de intentos/bloqueo
+  // entre el acceso general y el de Equipo Control Producción.
+  function createLoginGate({ input, btn, errorEl, hash, sessionKey, onSuccess }) {
+    let failedAttempts = 0;
+    let lockedUntil = 0;
 
-  async function attemptLogin() {
-    if (Date.now() < lockedUntil) return;
+    function startLockoutCountdown() {
+      input.disabled = true;
+      btn.disabled = true;
+      const tick = () => {
+        const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+          input.disabled = false;
+          btn.disabled = false;
+          errorEl.textContent = "";
+          failedAttempts = 0;
+          return;
+        }
+        errorEl.textContent = `Demasiados intentos. Espera ${remaining}s.`;
+        setTimeout(tick, 500);
+      };
+      tick();
+    }
 
-    const value = passwordInput.value.trim();
-    if (!value) return;
+    async function attempt() {
+      if (Date.now() < lockedUntil) return;
+      const value = input.value.trim();
+      if (!value) return;
 
-    const hash = await sha256Hex(value);
-    if (hash === PASSWORD_HASH) {
-      sessionStorage.setItem(SESSION_KEY, "1");
-      loginError.textContent = "";
-      showApp();
-    } else {
-      failedAttempts++;
-      passwordInput.value = "";
-      passwordInput.focus();
-      if (failedAttempts >= MAX_ATTEMPTS) {
-        lockedUntil = Date.now() + LOCKOUT_SECONDS * 1000;
-        startLockoutCountdown(LOCKOUT_SECONDS);
+      const digest = await sha256Hex(value);
+      if (digest === hash) {
+        sessionStorage.setItem(sessionKey, "1");
+        errorEl.textContent = "";
+        onSuccess();
       } else {
-        loginError.textContent = `Clave incorrecta (${failedAttempts}/${MAX_ATTEMPTS})`;
+        failedAttempts++;
+        input.value = "";
+        input.focus();
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          lockedUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+          startLockoutCountdown();
+        } else {
+          errorEl.textContent = `Clave incorrecta (${failedAttempts}/${MAX_ATTEMPTS})`;
+        }
       }
     }
+
+    btn.addEventListener("click", attempt);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") attempt(); });
   }
 
-  loginBtn.addEventListener("click", attemptLogin);
-  passwordInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") attemptLogin();
+  createLoginGate({
+    input: passwordInput, btn: loginBtn, errorEl: loginError,
+    hash: PASSWORD_HASH, sessionKey: SESSION_KEY, onSuccess: showApp
   });
 
-  if (sessionStorage.getItem(SESSION_KEY) === "1") {
-    showApp();
-  }
+  createLoginGate({
+    input: controlPasswordInput, btn: controlLoginBtn, errorEl: controlLoginError,
+    hash: CONTROL_PASSWORD_HASH, sessionKey: CONTROL_SESSION_KEY, onSuccess: showControlApp
+  });
+
+  showControlLoginBtn.addEventListener("click", () => {
+    loginModeMain.style.display = "none";
+    loginModeControl.style.display = "block";
+    controlPasswordInput.value = "";
+    controlPasswordInput.focus();
+  });
+
+  backToMainLoginBtn.addEventListener("click", showMainLoginMode);
 
   logoutBtn.addEventListener("click", () => {
     sessionStorage.removeItem(SESSION_KEY);
+    showLogin();
+  });
+
+  controlLogoutBtn.addEventListener("click", () => {
+    sessionStorage.removeItem(CONTROL_SESSION_KEY);
     showLogin();
   });
 
@@ -1082,7 +1293,7 @@
   });
 
   // ---- Selector de área (dentro de Resultados por Área) ----
-  const areaTabBtns = document.querySelectorAll(".area-tab-btn");
+  const areaTabBtns = document.querySelectorAll("#tab-resultados .area-tab-btn");
   const areaCards = document.querySelectorAll(".results-card[data-area]");
   let currentArea = "filete";
 
@@ -1094,6 +1305,211 @@
       loadResultados(currentArea);
     });
   });
+
+  // ---- Equipo Control Producción: Resultados por Día/Área ----
+  const summaryAreaTabBtns = document.querySelectorAll("#control-screen .area-tab-btn");
+  const summaryWeekInput = document.getElementById("summary-week-input");
+  const summaryTableHead = document.getElementById("summary-table-head");
+  const summaryTableBody = document.getElementById("summary-table-body");
+  const summaryAddRowBtn = document.getElementById("summary-add-row-btn");
+  const summarySaveBtn = document.getElementById("summary-save-btn");
+  const summaryStatus = document.getElementById("summary-status");
+  let currentSummaryArea = "filete";
+
+  const MESES_ES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+  function isoWeekToMonday(weekValue) {
+    const [yearStr, weekStr] = weekValue.split("-W");
+    const year = Number(yearStr);
+    const week = Number(weekStr);
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const jan4Day = jan4.getUTCDay() || 7;
+    const monday = new Date(jan4);
+    monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (week - 1) * 7);
+    return monday;
+  }
+
+  function summaryWeekDays(weekValue) {
+    if (!weekValue) return [];
+    const monday = isoWeekToMonday(weekValue);
+    const days = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(monday);
+      d.setUTCDate(monday.getUTCDate() + i);
+      days.push(d);
+    }
+    return days;
+  }
+
+  function formatDiaCorto(date) {
+    return `${String(date.getUTCDate()).padStart(2, "0")}-${MESES_ES_CORTOS[date.getUTCMonth()]}`;
+  }
+
+  function getCurrentIsoWeekValue() {
+    const now = new Date();
+    const target = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const dayNum = target.getUTCDay() || 7;
+    target.setUTCDate(target.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
+    return `${target.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  }
+
+  function renderSummaryHead(weekValue) {
+    const days = summaryWeekDays(weekValue);
+    const dayLabels = days.length ? days.map(formatDiaCorto) : ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5", "Día 6"];
+    summaryTableHead.innerHTML = `<th>Supervisor</th>${dayLabels.map((l) => `<th>${l}</th>`).join("")}<th>Promedio</th><th>Total</th><th></th>`;
+  }
+
+  function updateRowStats(tr) {
+    const dayInputs = Array.from(tr.querySelectorAll("input[type='number']"));
+    const values = dayInputs.map((inp) => Number(inp.value) || 0);
+    const total = values.reduce((a, b) => a + b, 0);
+    const nonZeroCount = values.filter((v) => v !== 0).length;
+    const promedio = nonZeroCount ? Math.round(total / nonZeroCount) : 0;
+    tr.querySelector(".summary-promedio-cell").textContent = promedio.toLocaleString("es-CL");
+    tr.querySelector(".summary-total-cell").textContent = total.toLocaleString("es-CL");
+  }
+
+  function createSummaryRow(supervisorName, diaValues) {
+    const tr = document.createElement("tr");
+
+    const supervisorTd = document.createElement("td");
+    const supervisorInput = document.createElement("input");
+    supervisorInput.type = "text";
+    supervisorInput.className = "summary-supervisor-input";
+    supervisorInput.placeholder = "Supervisor";
+    supervisorInput.value = supervisorName || "";
+    supervisorTd.appendChild(supervisorInput);
+    tr.appendChild(supervisorTd);
+
+    for (let i = 0; i < 6; i++) {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = "0";
+      input.step = "1";
+      input.inputMode = "numeric";
+      input.value = diaValues && diaValues[i] !== undefined && diaValues[i] !== "" ? diaValues[i] : "";
+      input.addEventListener("input", () => updateRowStats(tr));
+      td.appendChild(input);
+      tr.appendChild(td);
+    }
+
+    const promedioTd = document.createElement("td");
+    promedioTd.className = "summary-computed summary-promedio-cell";
+    tr.appendChild(promedioTd);
+
+    const totalTd = document.createElement("td");
+    totalTd.className = "summary-computed summary-total-cell";
+    tr.appendChild(totalTd);
+
+    const removeTd = document.createElement("td");
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "summary-remove-btn";
+    removeBtn.textContent = "✕";
+    removeBtn.addEventListener("click", () => tr.remove());
+    removeTd.appendChild(removeBtn);
+    tr.appendChild(removeTd);
+
+    updateRowStats(tr);
+    return tr;
+  }
+
+  function renderSummaryRows(rows) {
+    summaryTableBody.innerHTML = "";
+    if (!rows || !rows.length) {
+      summaryTableBody.appendChild(createSummaryRow("", []));
+      return;
+    }
+    rows.forEach((r) => summaryTableBody.appendChild(createSummaryRow(r.supervisor, r.dias)));
+  }
+
+  async function loadSummary() {
+    const week = summaryWeekInput.value;
+    renderSummaryHead(week);
+    if (!week) {
+      renderSummaryRows([]);
+      summaryStatus.textContent = "";
+      return;
+    }
+    summaryStatus.textContent = "Cargando…";
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=summaryRead&area=${currentSummaryArea}&week=${week}`);
+      const data = await res.json();
+      renderSummaryRows(data.rows);
+      summaryStatus.textContent = "";
+    } catch (err) {
+      renderSummaryRows([]);
+      summaryStatus.textContent = "";
+      showToast("⚠️ No se pudieron cargar los datos de esa semana.", true);
+    }
+  }
+
+  summaryWeekInput.addEventListener("change", loadSummary);
+
+  summaryAreaTabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentSummaryArea = btn.dataset.summaryArea;
+      summaryAreaTabBtns.forEach((b) => b.classList.toggle("active", b === btn));
+      loadSummary();
+    });
+  });
+
+  summaryAddRowBtn.addEventListener("click", () => {
+    summaryTableBody.appendChild(createSummaryRow("", []));
+  });
+
+  summarySaveBtn.addEventListener("click", async () => {
+    const week = summaryWeekInput.value;
+    if (!week) {
+      showToast("⚠️ Elegí una semana antes de guardar.", true);
+      return;
+    }
+
+    const rows = Array.from(summaryTableBody.querySelectorAll("tr"))
+      .map((tr) => ({
+        supervisor: tr.querySelector(".summary-supervisor-input").value.trim(),
+        dias: Array.from(tr.querySelectorAll("input[type='number']")).map((inp) => inp.value.trim())
+      }))
+      .filter((r) => r.supervisor !== "");
+
+    if (!rows.length) {
+      showToast("⚠️ Agregá al menos un supervisor con nombre.", true);
+      return;
+    }
+
+    summarySaveBtn.disabled = true;
+    summaryStatus.textContent = "Guardando…";
+    try {
+      const params = new URLSearchParams({
+        action: "summaryUpdate",
+        key: CONTROL_WRITE_KEY,
+        area: currentSummaryArea,
+        week,
+        rows: JSON.stringify(rows)
+      });
+      const res = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      renderSummaryRows(data.rows);
+      summaryStatus.textContent = "Guardado ✅";
+      showToast("✅ Semana guardada", false);
+    } catch (err) {
+      summaryStatus.textContent = "";
+      showToast("⚠️ No se pudo guardar. Revisa tu conexión.", true);
+    } finally {
+      summarySaveBtn.disabled = false;
+    }
+  });
+
+  // ---- Restaurar sesión activa (al final: depende de todo lo declarado arriba) ----
+  if (sessionStorage.getItem(SESSION_KEY) === "1") {
+    showApp();
+  } else if (sessionStorage.getItem(CONTROL_SESSION_KEY) === "1") {
+    showControlApp();
+  }
 </script>
 
 </body>

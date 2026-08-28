@@ -16,7 +16,21 @@
 
 var WRITE_KEY = "sa-resultados-2026"; // clave de escritura. Debe coincidir con index.html.
 
+// Clave separada para "Equipo Control Producción" (Resultados por Día/Área).
+// Independiente de WRITE_KEY — acceso distinto del de los operarios de planta.
+var CONTROL_KEY = "sa-control-2026"; // debe coincidir con CONTROL_WRITE_KEY en index.html.
+
 var SHEET_ID = "1hkzQJJnTtBi_3k9LhlieLu8msHnoorS3Ikf5RsI8vgo";
+
+// "Resumen por Día/Área": resumen semanal por supervisor, independiente del
+// sistema AREAS de arriba (ese es "estado actual del turno"; esto es
+// "historial semanal", una fila por supervisor por semana, sin pestaña de
+// Log aparte — la pestaña entera ES el historial).
+var SUMMARY_AREAS = {
+  filete: { label: "Filete", sheetTab: "Resumen Filete" },
+  lavado: { label: "Lavado", sheetTab: "Resumen Lavado" }
+};
+var SUMMARY_HEADERS = ["Semana", "Supervisor", "Día 1", "Día 2", "Día 3", "Día 4", "Día 5", "Día 6", "Promedio", "Total"];
 
 var AREAS = {
   filete: {
@@ -397,6 +411,85 @@ function addHoraNextToFecha_(slideId, fechaTag, horaTag) {
   addBox("--:--:--", vx, vy, vw, vh, 14, false, horaTag);
 }
 
+// ---- Resumen por Día/Área (Equipo Control Producción) ----
+
+function getSummarySheet_(ss, summaryArea) {
+  return ss.getSheetByName(summaryArea.sheetTab) || ss.insertSheet(summaryArea.sheetTab);
+}
+
+function ensureSummaryHeaders_(sheet) {
+  var firstCell = sheet.getRange(1, 1).getValue();
+  if (firstCell === SUMMARY_HEADERS[0]) return; // ya están puestos
+  sheet.getRange(1, 1, 1, SUMMARY_HEADERS.length).setValues([SUMMARY_HEADERS]);
+  sheet.getRange(1, 1, 1, SUMMARY_HEADERS.length).setFontWeight("bold");
+  // Semana/Supervisor en texto plano — mismo bug conocido de Sheets autoconvirtiendo texto a fecha/número.
+  sheet.getRange("A2:B").setNumberFormat("@");
+}
+
+function computeSummaryStats_(dias) {
+  var total = 0;
+  var nonZeroCount = 0;
+  dias.forEach(function (v) {
+    var n = Number(v) || 0;
+    total += n;
+    if (n !== 0) nonZeroCount++;
+  });
+  var promedio = nonZeroCount ? Math.round(total / nonZeroCount) : 0;
+  return { total: total, promedio: promedio };
+}
+
+function readSummary_(summaryArea, week) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSummarySheet_(ss, summaryArea);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { rows: [] };
+  var data = sheet.getRange(2, 1, lastRow - 1, SUMMARY_HEADERS.length).getValues();
+  var rows = [];
+  data.forEach(function (row) {
+    if (String(row[0]) !== week) return;
+    rows.push({
+      supervisor: String(row[1] || ""),
+      dias: row.slice(2, 8).map(function (v) { return Number(v) || 0; }),
+      promedio: Number(row[8]) || 0,
+      total: Number(row[9]) || 0
+    });
+  });
+  return { rows: rows };
+}
+
+// Borra las filas existentes de esa (área, semana) y reinserta las nuevas —
+// Promedio/Total se recalculan acá, no se confía en lo que mande el navegador.
+function writeSummary_(summaryArea, week, incomingRows) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = getSummarySheet_(ss, summaryArea);
+  ensureSummaryHeaders_(sheet);
+
+  var lastRow = sheet.getLastRow();
+  var existing = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, SUMMARY_HEADERS.length).getValues() : [];
+  var keep = existing.filter(function (row) { return String(row[0]) !== week; });
+
+  var newRows = incomingRows.map(function (r) {
+    var dias = (r.dias || []).map(function (v) { return Number(v) || 0; });
+    while (dias.length < 6) dias.push(0);
+    var stats = computeSummaryStats_(dias);
+    return [week, String(r.supervisor || "")].concat(dias, [stats.promedio, stats.total]);
+  });
+
+  var finalRows = keep.concat(newRows);
+  if (lastRow >= 2) {
+    sheet.getRange(2, 1, lastRow - 1, SUMMARY_HEADERS.length).clearContent();
+  }
+  if (finalRows.length) {
+    sheet.getRange(2, 1, finalRows.length, SUMMARY_HEADERS.length).setValues(finalRows);
+  }
+
+  return {
+    rows: newRows.map(function (row) {
+      return { supervisor: row[1], dias: row.slice(2, 8), promedio: row[8], total: row[9] };
+    })
+  };
+}
+
 function jsonOutput_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -405,6 +498,27 @@ function jsonOutput_(obj) {
 function doGet(e) {
   var params = (e && e.parameter) || {};
   var action = params.action || "read";
+
+  if (action === "summaryRead") {
+    var summaryAreaRead = SUMMARY_AREAS[params.area];
+    if (!summaryAreaRead) return jsonOutput_({ error: "unknown_area" });
+    return jsonOutput_(readSummary_(summaryAreaRead, params.week || ""));
+  }
+
+  if (action === "summaryUpdate") {
+    if (params.key !== CONTROL_KEY) return jsonOutput_({ error: "unauthorized" });
+    var summaryAreaWrite = SUMMARY_AREAS[params.area];
+    if (!summaryAreaWrite) return jsonOutput_({ error: "unknown_area" });
+    var incomingRows;
+    try {
+      incomingRows = JSON.parse(params.rows || "[]");
+    } catch (e2) {
+      return jsonOutput_({ error: "invalid_rows" });
+    }
+    var summaryResult = writeSummary_(summaryAreaWrite, params.week || "", incomingRows);
+    summaryResult.ok = true;
+    return jsonOutput_(summaryResult);
+  }
 
   var area = AREAS[params.area || "filete"];
   if (!area) return jsonOutput_({ error: "unknown_area" });
