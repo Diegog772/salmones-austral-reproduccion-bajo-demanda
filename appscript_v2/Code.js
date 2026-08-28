@@ -30,10 +30,7 @@ var SUMMARY_AREAS = {
   filete: {
     label: "Filete",
     sheetTab: "Resumen Filete",
-    // Slide anterior (1n_JlFoFQHglssKnIi9reiQtnXBqP0L_0iunzCz2C_xo) se creó
-    // con la cuenta equivocada (pablosiegeli@gmail.com) y se eliminó.
-    // Pendiente: reconectar con la Slide nueva creada desde pablo@getsystem.io.
-    slideIds: []
+    slideIds: ["1D2InuuGHTql1v7ZFhswvfIGCW6ioQrlJZz0uRNw5wtw"]
   },
   lavado: { label: "Lavado", sheetTab: "Resumen Lavado", slideIds: [] }
 };
