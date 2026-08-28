@@ -86,6 +86,13 @@ function formatFecha_(fechaCell, tz) {
   return String(fechaCell || "");
 }
 
+function formatHora_(horaCell, tz) {
+  if (Object.prototype.toString.call(horaCell) === "[object Date]") {
+    return Utilities.formatDate(horaCell, tz, "HH:mm:ss");
+  }
+  return String(horaCell || "");
+}
+
 function rowToObj_(row, area) {
   var out = {};
   area.fields.forEach(function (field, i) {
@@ -119,11 +126,13 @@ function readData_(area) {
   var lastCol = colLetter_(area.fields.length + 1);
   var rows = sheet.getRange("B2:" + lastCol + lastRow).getValues();
   var tz = Session.getScriptTimeZone() || "America/Santiago";
-  var fecha = formatFecha_(sheet.getRange("B" + fechaRow_(area)).getValue(), tz);
+  var fr = fechaRow_(area);
+  var fecha = formatFecha_(sheet.getRange("B" + fr).getValue(), tz);
+  var hora = formatHora_(sheet.getRange("D" + fr).getValue(), tz);
 
   var result = area.hasLineas
-    ? { l1: rowToObj_(rows[0], area), l2: rowToObj_(rows[1], area), fecha: fecha }
-    : Object.assign(rowToObj_(rows[0], area), { fecha: fecha });
+    ? { l1: rowToObj_(rows[0], area), l2: rowToObj_(rows[1], area), fecha: fecha, hora: hora }
+    : Object.assign(rowToObj_(rows[0], area), { fecha: fecha, hora: hora });
   Logger.log("readData_[" + area.label + "]: " + JSON.stringify(result));
   return result;
 }
@@ -223,12 +232,19 @@ function writeData_(params, area) {
   if (area.hasLineas) logRow = logRow.concat(rows[1]);
   logSheet.appendRow(logRow);
 
+  // Hora del guardado (celda D de la fila de Fecha) — se pisa cada vez, a
+  // diferencia de la Fecha (fórmula =TODAY() propia del Sheet, no se toca).
+  // Forzar texto plano para que Sheets no la autoconvierta a un valor Hora.
+  var horaCell = sheet.getRange("D" + fechaRow_(area));
+  horaCell.setNumberFormat("@");
+  horaCell.setValue(hora);
+
   syncSheetToSlide_(sheet, area.slideIds);
 
   var fecha = formatFecha_(sheet.getRange("B" + fechaRow_(area)).getValue(), tz);
   var result = area.hasLineas
-    ? { l1: rowToObj_(rows[0], area), l2: rowToObj_(rows[1], area), fecha: fecha }
-    : Object.assign(rowToObj_(rows[0], area), { fecha: fecha });
+    ? { l1: rowToObj_(rows[0], area), l2: rowToObj_(rows[1], area), fecha: fecha, hora: hora }
+    : Object.assign(rowToObj_(rows[0], area), { fecha: fecha, hora: hora });
   Logger.log("writeData_[" + area.label + "]: resultado final -> " + JSON.stringify(result));
   return result;
 }
@@ -254,6 +270,7 @@ function setupHeaders_(area) {
   var fr = fechaRow_(area);
   sheet.getRange("A" + fr).setValue("Fecha");
   sheet.getRange("B" + fr).setFormula("=TODAY()"); // Apps Script exige el nombre en inglés aunque el Sheet esté en español
+  sheet.getRange("C" + fr).setValue("Hora"); // valor plano, se pisa en cada guardado (ver writeData_)
 
   var logSheet = ss.getSheetByName(area.logTab);
   if (!logSheet) {

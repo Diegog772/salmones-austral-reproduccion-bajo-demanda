@@ -989,6 +989,11 @@
     return values[cfg.requiredField] !== "" && !isNaN(Number(values[cfg.requiredField]));
   }
 
+  function formatUltimoGuardado(data) {
+    if (!data.fecha) return "";
+    return data.hora ? `Último guardado: ${data.fecha} ${data.hora}` : `Último guardado: ${data.fecha}`;
+  }
+
   async function loadResultados(area) {
     const els = areaEls[area];
     els.status.textContent = "Cargando valores actuales…";
@@ -996,7 +1001,7 @@
       const res = await fetch(`${APPS_SCRIPT_URL}?action=read&area=${area}`);
       const data = await res.json();
       setAreaValues(area, data);
-      els.status.textContent = data.fecha ? `Último guardado: ${data.fecha}` : "";
+      els.status.textContent = formatUltimoGuardado(data);
     } catch (err) {
       els.status.textContent = "";
       showToast("⚠️ No se pudieron cargar los valores actuales.", true);
@@ -1035,7 +1040,7 @@
 
         await fetch(cfg.playUrl, { mode: "no-cors" });
 
-        els.status.textContent = `Último guardado: ${data.fecha}`;
+        els.status.textContent = formatUltimoGuardado(data);
         showToast("✅ Resultados guardados y pantalla actualizada", false);
       } catch (err) {
         els.status.textContent = "";
