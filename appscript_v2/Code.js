@@ -32,7 +32,11 @@ var SUMMARY_AREAS = {
     sheetTab: "Resumen Filete",
     slideIds: ["1D2InuuGHTql1v7ZFhswvfIGCW6ioQrlJZz0uRNw5wtw"]
   },
-  lavado: { label: "Lavado", sheetTab: "Resumen Lavado", slideIds: [] }
+  lavado: {
+    label: "Lavado",
+    sheetTab: "Resumen Lavado",
+    slideIds: ["1fzo3UBA9wa_YMoWz8WWNkcMZ2rU0KNHWnHy7v3zuR_E"]
+  }
 };
 var SUMMARY_MAX_SLIDE_ROWS = 6; // cantidad de filas de supervisor que soporta la Slide
 var SUMMARY_HEADERS = ["Semana", "Supervisor", "Día 1", "Día 2", "Día 3", "Día 4", "Día 5", "Día 6", "Promedio", "Total"];
